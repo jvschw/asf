@@ -8,17 +8,6 @@ persistent frameCounter
 %     flipval = 0;
 % end
 
-[bUpDn, T, keyCodeKbCheck] = KbCheck;
-if bUpDn % break out of loop
-    if find(keyCodeKbCheck) == 81
-        fprintf(1, 'USER ABORTED PROGRAM\n');
-        ASF_PTBExit(windowPtr, Cfg, 1)
-        %FORCE AN ERROR
-        error('USERABORT')
-        %IF TRY/CATCH IS ON THE FOLLOWING LINE CAN BE COMMENTED OUT
-        %PTBExit(windowPtr);
-    end
-end
 
 switch bPreserveBackBuffer
     case 0 %DESTRUCTIVE FLIP
@@ -44,3 +33,17 @@ if Cfg.writeVideo
     VideoName = sprintf('frame%06d.bmp', frameCounter);
     imwrite(imageArray, VideoName, 'BMP')
 end
+
+%CHECK IF USER WANTS TO QUIT
+[bUpDn, T, keyCodeKbCheck] = KbCheck;
+if bUpDn % break out of loop
+    if find(keyCodeKbCheck) == 81
+        fprintf(1, 'USER ABORTED PROGRAM\n');
+        ASF_PTBExit(windowPtr, Cfg, 1)
+        %FORCE AN ERROR
+        error('USERABORT')
+        %IF TRY/CATCH IS ON THE FOLLOWING LINE CAN BE COMMENTED OUT
+        %PTBExit(windowPtr);
+    end
+end
+
