@@ -1,7 +1,7 @@
 function [errorFlag, Stimuli, frameCounter] = ASF_readStimulus(stimName, windowPtr, Cfg)
 %function [errorFlag, Stimuli] = ASF_readStimulus(stimName, windowPtr, Cfg)
 %READ A SINGLE STIMULUS INTO Stimuli-STRUCTURE
-%USED FOR ONLINE STIMULUS LOADING AND FOR RITMULUS PREFETCHING
+%USED FOR ONLINE STIMULUS LOADING AND FOR STIMULUS PREFETCHING
 %20101211 jens.schwarzbach@unitn.it
 
 %ALSO ADD A FLAG FOR NOT ACTUALLY READING THE STIMULUS BUT ONLY CHECKING
