@@ -1,5 +1,6 @@
 function tOnset = ASF_getTrialOnsetTimes(ExpInfo)
 %function tOnset = ASF_getTrialOnsetTimes(ExpInfo)
+%returns a vector for trial onset times
 
 nTrials = length(ExpInfo.TrialInfo);
 tOnset = zeros(nTrials, 1);
