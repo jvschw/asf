@@ -1,4 +1,4 @@
-function ASF_timingDiagnosis(ExpInfo)
+function diagMat = ASF_timingDiagnosis(ExpInfo)
 %function ASF_timingDiagnosis(ExpInfo)
 %ANALYZES FOR EACH TRIAL AND PAGE BY HOW MUCH THE DURATION OF A GIVEN PAGE
 %DIFFERED FROM WHAT THE EXPERIMENTER HAD REQUESTED IN THE TRD FILE.
@@ -26,6 +26,24 @@ end
 if Cfg.plottrial
     figure
 end
+fprintf(1, '\n');
+fprintf(1, '-------------------------------------------------------\n');
+fprintf(1, 'TIMING DIAGNOSIS\n')
+fprintf(1, '-------------------------------------------------------\n');
+fprintf(1, '\n');
+
+fprintf(1, '-------------------------------------------------------\n');
+fprintf(1, 'Monitor Flip Interval (measured by PTB):\t%8.3f ms\n', ...
+    ExpInfo.Cfg.Screen.monitorFlipInterval*1000);
+fprintf(1, 'Empirical Refresh Rate:\t\t\t\t\t\t%8.3f Hz\n',...
+    1/ExpInfo.Cfg.Screen.monitorFlipInterval);
+fprintf(1, '-------------------------------------------------------\n');
+fprintf(1, 'Legend:\n');
+fprintf(1, '[f]\t\tframes\n');
+fprintf(1, '[ms]\tmilliseconds\n');
+fprintf(1, 'eval\tOK if |req - perf| < %d ms\n', Cfg.criticalDeviation);
+
+counter = 0;
 for iTrial = 1:nTrials
     ti = ExpInfo.TrialInfo(iTrial).timing;
     %TI CONTAINS THE LOGGED TIMING-INFO OF A GIVEN TRIAL. IT HAS AS MANY 
@@ -94,6 +112,11 @@ for iTrial = 1:nTrials
                     pageDurationRequested_ms(iPage),...
                     pageDurationPerformed_ms(iPage), deviation_ms(iPage),...
                     pageEval);
+                %STORE THIS FOR FUTURE PURPOSES
+                counter = counter + 1;
+                diagMat(counter, :) = [iTrial, iPage, pageNumbers(iPage),...
+                    pageDurations(iPage), pageDurationRequested_ms(iPage),...
+                    pageDurationPerformed_ms(iPage), deviation_ms(iPage)];
             end
         end
         if Cfg.plottrial
