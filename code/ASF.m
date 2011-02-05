@@ -205,21 +205,13 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %% ***ASF-MAIN LOOP***
 
 %DEFAULT CONFIGURATION
-Cfg.ASFVersion = 0.43;
+Cfg.ASFVersion = 0.44;
 
 %SCREEN SETTINGS
 if ~isfield(Cfg, 'Screen'), Cfg.Screen = []; else end;
 if ~isfield(Cfg.Screen, 'skipSyncTests'), Cfg.Screen.skipSyncTests = 0; else end;
 if ~isfield(Cfg.Screen, 'rect'), Cfg.Screen.rect = []; else end; %Cfg.Screen.rect = [1, 1, 320, 240]
 if ~isfield(Cfg.Screen, 'color'), Cfg.Screen.color = [255, 255, 255]; else end;% [{[255, 255, 255]}|[R, G, B]]
-%NEED TO REWORK THE ENTIRE SCREEN RESOLUTION SETUP
-%if ~isfield(Cfg.Screen, 'Resolution'), Cfg.Screen.Resolution = []; else end; %the rest of this structure is set it PTBInit
-%MatlabResolutionNow = get(0, 'ScreenSize');
-%if ~isfield(Cfg.Screen, 'useDefaultResolution'), Cfg.Screen.useDefaultResolution = 1; else end;
-%if ~isfield(Cfg.Screen.Resolution, 'width'), Cfg.Screen.Resolution.width = MatlabResolutionNow(3); else end;
-%if ~isfield(Cfg.Screen.Resolution, 'height'), Cfg.Screen.Resolution.height = MatlabResolutionNow(4); else end;
-%if ~isfield(Cfg.Screen.Resolution, 'pixelSize'), Cfg.Screen.Resolution.pixelSize = 32; else end;
-%if ~isfield(Cfg.Screen, 'refreshRateHz'), Cfg.Screen.Resolution.hz = 60; else end;
 if ~isfield(Cfg.Screen, 'fontSize'), Cfg.Screen.fontSize = 24; end;
 if ~isfield(Cfg.Screen, 'fontName'), Cfg.Screen.fontName = 'Arial'; end; %'Courier New'
 %SHOULD BE CALLED Cfg.Screen.useBackBuffer
@@ -679,19 +671,26 @@ WaitSecs(1);
 % Set program priority to highest
 function [windowPtr, Cfg] = PTBInit(Cfg, expName)
 if(~isfield(Cfg, 'Screen')), Cfg.Screen = []; end
-%if(~isfield(Cfg.Screen, 'useDefaultResolution')), Cfg.Screen.useDefaultResolution = 1; end
 if(~isfield(Cfg.Screen, 'color')), Cfg.Screen.color = [255, 255, 255]; end %OBSOLETE BUT I'LL LEAVEIT FOR NOW
 if(~isfield(Cfg.Screen, 'rect')), Cfg.Screen.rect = []; end
 if(~isfield(Cfg.Screen, 'Resolution'))
-    Cfg.Screen.Resolution.pixelSize = 32;
-    monitorPositions = get(0, 'MonitorPositions');
-    Cfg.Screen.Resolution.width = monitorPositions(end, end - 1) - monitorPositions(end, 1) + 1;
-    Cfg.Screen.Resolution.height = monitorPositions(end, end);
-    Cfg.Screen.Resolution.hz = 60;
-    Cfg.Screen.Resolution.pixelSize= 32;
+    Cfg.Screen.Resolution = [];
+    Cfg.Screen.useDefaultResolution = 1;
+else
+    Cfg.Screen.useDefaultResolution = 0;
+    if(~isfield(Cfg.Screen.Resolution, 'pixelSize')), Cfg.Screen.Resolution.pixelSize = 32; end
+    if(~isfield(Cfg.Screen.Resolution, 'hz'))
+        switch OSName
+            case 'Windows'
+                Cfg.Screen.Resolution.hz = 60;
+            case 'OSX'
+                Cfg.Screen.Resolution.hz = 0;
+        end
+    end
+    
 end
-if(~isfield(Cfg.Screen.Resolution, 'pixelSize')), Cfg.Screen.Resolution.pixelSize = 32; end
-if(~isfield(Cfg.Screen.Resolution, 'hz')), Cfg.Screen.Resolution.hz = 60; end
+
+
 if(~isfield(Cfg.Screen, 'numberOfBuffers')), Cfg.Screen.numberOfBuffers = []; end
 if(~isfield(Cfg.Screen, 'stereomode')), Cfg.Screen.stereomode = []; end
 if(~isfield(Cfg.Screen, 'multisample')), Cfg.Screen.multisample = []; end
@@ -734,7 +733,7 @@ Cfg.Screen.NewResolution.hz = 0;
 %SET REQUESTED SCREEN RESOLUTION AND REFRESH RATE
 Cfg.ScreenVersion = Screen('Version');
 
-if ~isempty(Cfg.Screen.Resolution)
+if ~Cfg.Screen.useDefaultResolution
     %IF THIS STRUCTURE IS NOT EMPTY THEN THE USER WISHES TO SET THE RESOLUTION
     %SCREEN RESOLUTIONS IS A RELATIVELY RECENT ADDITION TO PTB
     if Cfg.ScreenVersion.build >= 170126971
@@ -775,8 +774,12 @@ Screen('Preference', 'SkipSyncTests', Cfg.Screen.skipSyncTests);
 fprintf(1, '*****************************************************************************\n');
 fprintf(1, '********** OPENING ONSCREEN WINDOW AND PERFORMING SOME DIAGNOSTICS **********\n');
 fprintf(1, '*****************************************************************************\n');
-%[windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber);%[windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, Cfg.Screen.color, Cfg.Screen.rect);
-[windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, Cfg.Screen.color, Cfg.Screen.rect, Cfg.Screen.Resolution.pixelSize, Cfg.Screen.numberOfBuffers);
+
+if Cfg.Screen.useDefaultResolution
+    [windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber);%[windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, Cfg.Screen.color, Cfg.Screen.rect);
+else
+    [windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, Cfg.Screen.color, Cfg.Screen.rect, Cfg.Screen.Resolution.pixelSize, Cfg.Screen.numberOfBuffers);
+end
 Cfg.Screen.NewResolution = Screen('Resolution', windowPtr); %ALTHOUGH THIS PARAMETER MAY HAVE BEEN SET, THIS NOW ALSO CATCHES THE SITUATION WHEN CURRENT SETTINGS ARE USED
 
 %SOME GRAPHICS BOARDS SEEM NOT TO LIKE THIS
