@@ -15,7 +15,7 @@ if(exist(stimName, 'file'))
     
     [thisDir, thisName, thisExt] = fileparts(stimName);
     switch thisExt
-        case {'.bmp', '.jpg'}
+        case {'.bmp', '.jpg', '.png', '.jpeg', '.gif'}
             frameCounter = frameCounter + 1;
             
             %CHECK TYPE OF STIMULUS
