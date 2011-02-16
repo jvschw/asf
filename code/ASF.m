@@ -205,7 +205,7 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %% ***ASF-MAIN LOOP***
 
 %DEFAULT CONFIGURATION
-Cfg.ASFVersion = 0.44;
+Cfg.ASFVersion = 0.45;
 
 %SCREEN SETTINGS
 if ~isfield(Cfg, 'Screen'), Cfg.Screen = []; else end;
@@ -484,6 +484,7 @@ return
 %% ***INITIALIZATION ROUTINES***
 %% ASFInit
 function [ExpInfo, Cfg, trial, windowPtr, Stimuli] = ASFInit(Cfg, expName)
+errorFlag = 0;
 
 fprintf(1, '***********************\n');
 fprintf(1, '*** ASF VERSION %5.3f ***\n', Cfg.ASFVersion);
@@ -646,7 +647,7 @@ Screen('TextSize', windowPtr, Cfg.Screen.fontSize);
 %LOAD BMPs ONTO TEXTURES
 Screen('DrawText', windowPtr, '... Loading Bitmaps...', 50, 495);
 Screen('Flip', windowPtr, 0, 1);
-[ExpInfo.stimNames, Stimuli, errorFlag] = read_stimuli(windowPtr, Cfg);
+[ExpInfo.stimNames, Stimuli, errorFlag, Cfg] = read_stimuli(windowPtr, Cfg);
 if errorFlag
     ASF_PTBExit(windowPtr, Cfg, errorFlag)
     error('PROGRAM ABORTED')
@@ -659,7 +660,23 @@ if errorFlag
     error('PROGRAM ABORTED')
 end
 
-%GET READY
+%CHECK IF ANY PAGENUMBER IN TRIALDEFS EXCEEDS THE HIGHES POSSIBLE FRAME
+%NUMBER
+for iTrial = 1:length(trial)
+    if any(trial(iTrial).pageNumber > Cfg.frameCounter)
+        fprintf('Error. Trial %3d contains a reference to a non-existing stimulus (pageNumber). Max is %d.\n', iTrial, Cfg.frameCounter);
+        fprintf(1, 'pageNumber = [ ')
+        fprintf(1, '%d ', trial(iTrial).pageNumber);
+        fprintf(']\n');
+        errorFlag = 1;
+    end
+end
+if errorFlag
+    ASF_PTBExit(windowPtr, Cfg, errorFlag)
+    error('PROGRAM ABORTED')
+end
+
+    %GET READY
 Screen('DrawText', windowPtr, '... press mouse button to begin ...', 50, 545);
 Screen('Flip', windowPtr);
 ASF_waitForMousePressBenign(inf);
@@ -896,13 +913,13 @@ end
 
 %% read_stimuli
 % Loads bitmaps from a list specified in a textfile onto textures
-function [stimNames, Stimuli, errorFlag] = read_stimuli(windowPtr, Cfg)
+function [stimNames, Stimuli, errorFlag, Cfg] = read_stimuli(windowPtr, Cfg)
 %function [stimNames, tex] = read_stimuli(windowPtr, fname_stim)
 %Loads bitmaps from a list specified in a textfile onto textures
 %if successful returns nstimulus names and textures
 %Example Call:
 %[stimNames, tex] = read_stimuli(windowPtr, 'stimdef.txt')
-
+Cfg.frameCounter = 0;
 fname_stim = Cfg.stimNames;
 %READ STIMULUS-NAMES
 stimNames  = importdata(fname_stim);
@@ -913,7 +930,7 @@ nStimuli = size(stimNames, 1);
 
 %CHECK WHETHER IMAGES EXIST
 errorFlag = 0;
-frameCounter = 0; %#ok<NASGU>
+%frameCounter = 0; %#ok<NASGU>
 %Stimuli.tex(nStimuli) = NaN;
 Stimuli.tex = [];
 Stimuli.size = [];
@@ -935,6 +952,7 @@ for iStimulus = 1:nStimuli
     %CREATE TEXTURE(S) FOR A GIVEN STIMULUS
     [errorFlag, aStimulus, frameCounter] =...
         ASF_readStimulus(stimNames{iStimulus}, windowPtr, Cfg);
+    Cfg.frameCounter = Cfg.frameCounter + frameCounter;
     %CONCATENATE VECTOR OF EXISTING AND NEWLY CREATED TEXTURE HANDLES
     Stimuli.tex = [Stimuli.tex, aStimulus.tex];
     %Stimuli.size = vertStimuli.size
