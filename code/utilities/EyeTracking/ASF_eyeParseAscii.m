@@ -7,7 +7,7 @@ function [tokenResults, trialInfo] = ASF_eyeParseAscii(fname, tokens)
 %%jens.schwarzbach@unitn.it 20110226
 %
 %%EXAMPLE CALLS
-%[tokenResults, trialInfo] = ASF_eyeParseAscii('demo.asc', {'MSG', 'EFIX', 'ESACC'})
+%[tokenResults, trialInfo] = ASF_eyeParseAscii('exampleCentralEL.asc', {'MSG', 'EFIX', 'ESACC', 'EBLINK'})
 %tokenResults(1).lines(:)
 %[tokenResults, trialInfo] = ASF_eyeParseAscii('JVS_MPEH01.asc', {'MSG', 'EFIX', 'ESACC', 'EBLINK'})
 %
