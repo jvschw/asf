@@ -1,4 +1,5 @@
-function [edfFile, el, status, stopkey, startkey, eye_used] = ASF_initEyelinkConnection(useEyelinkMouseMode, doCalibration, doDriftCorr, windowPtr, edfName, varargin)
+function [edfFile, el, status, stopkey, startkey, eye_used] = ASF_initEyelinkConnection(useEyelinkMouseMode, doCalibration, doDriftCorr, windowPtr, edfName)
+%function [edfFile, el, status, stopkey, startkey, eye_used] = ASF_initEyelinkConnection(useEyelinkMouseMode, doCalibration, doDriftCorr, windowPtr, edfName, varargin)
 % define connection mode and initialize connection as configured in ASF
 % created by Angelika Lingnau, 2008-01-26
 % 16-05-2008 included calibration into code
@@ -7,11 +8,11 @@ function [edfFile, el, status, stopkey, startkey, eye_used] = ASF_initEyelinkCon
 % 01-08-2008 added code to show large calibration targets for
 %            low vision patients
 
-if isempty(varargin)==0
-    largeCalibTargets = 1;
-else
-    largeCalibTargets = 0;
-end
+% if isempty(varargin)==0
+%     largeCalibTargets = 1;
+% else
+%     largeCalibTargets = 0;
+% end
 
 %----check connection status and connect if required----
 switch useEyelinkMouseMode
@@ -32,13 +33,26 @@ end
 edfFile = edfName; %WE NEED TO ADD CODE THAT MAKES SURE THAT THE FILENAME IS NOT LONGER THAN X CHARACTERS
 
 %--------initialize eyelink default settings-----------
-%el=EyelinkInitDefaults(windowPtr);
-el=EyelinkInitDefaults(windowPtr, largeCalibTargets);
+el=EyelinkInitDefaults(windowPtr);
+%el=EyelinkInitDefaults(windowPtr, largeCalibTargets);
 
-status=Eyelink('command','link_sample_data = LEFT,RIGHT,GAZE,AREA,GAZERES,HREF,PUPIL,STATUS,INPUT');
-if status~=0
-    error('link_sample_data error, status: ', status); % make sure that we get gaze data from the Eyelink
-end
+eyelink('command', 'file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON');
+eyelink('command', 'link_sample_data  = LEFT,RIGHT,GAZE,AREA');
+eyelink('command', 'link_event_data = GAZE,GAZERES,HREF,AREA,VELOCITY');
+eyelink('command', 'link_event_filter = LEFT,RIGHT,FIXATION,BLINK,SACCADE,BUTTON');
+
+% 
+% 
+% status=Eyelink('command','link_sample_data = LEFT,RIGHT,GAZE,AREA,GAZERES,HREF,PUPIL,STATUS,INPUT');
+% if status~=0
+%     error('link_sample_data error, status: ', status); % make sure that we get gaze data from the Eyelink
+% end
+% 
+% status=Eyelink('command','file_event_data = LEFT,RIGHT,GAZE,AREA,GAZERES,HREF,PUPIL,STATUS,INPUT');
+% if status~=0
+%     error('file_event_data error, status: ', status); % make sure that we get gaze data from the Eyelink
+% end
+% 
 
 %--------open data file if data are recorded-----------
 status=Eyelink('openfile',edfFile); % open file to record data to
