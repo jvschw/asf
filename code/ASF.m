@@ -205,7 +205,7 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %% ***ASF-MAIN LOOP***
 
 %DEFAULT CONFIGURATION
-Cfg.ASFVersion = 0.45;
+Cfg.ASFVersion = 0.46;
 
 %SCREEN SETTINGS
 if ~isfield(Cfg, 'Screen'), Cfg.Screen = []; else end;
@@ -326,7 +326,14 @@ Cfg.trialFileName = trialFileName;%'test.stm';
 %------------------------------------------------------------------
 if Cfg.Eyetracking.useEyelink
     %[edfFile, Cfg.el, status, stopkey, startkey, eye_used] = ASF_initEyelinkConnection(Cfg.Eyetracking.useEyelinkMouseMode, windowPtr, Cfg.Eyetracking.edfName);
-    [edfFile, Cfg.el, Cfg.Eyetracking.status, Cfg.Eyetracking.stopkey, Cfg.Eyetracking.startkey, Cfg.Eyetracking.eye_used] = ASF_initEyelinkConnection(Cfg.Eyetracking.useEyelinkMouseMode, Cfg.Eyetracking.doCalibration, Cfg.Eyetracking.doDriftCorr, windowPtr, Cfg.Eyetracking.edfName, Cfg.Eyetracking.edfLargeCalibrationTargets);
+    [edfFile, Cfg.el, Cfg.Eyetracking.status, Cfg.Eyetracking.stopkey, Cfg.Eyetracking.startkey, Cfg.Eyetracking.eye_used] = ASF_initEyelinkConnection(Cfg.Eyetracking.useEyelinkMouseMode, Cfg.Eyetracking.doCalibration, Cfg.Eyetracking.doDriftCorrection, windowPtr, Cfg.Eyetracking.edfName);
+    
+    %ADDED BY AL 2010-10-12--------------------------------------------
+    Screen('FillRect', windowPtr, Cfg.Screen.color);
+    Screen('Flip', windowPtr);
+    %ADDED BY AL 2010-10-12--------------------------------------------
+
+    %[edfFile, Cfg] = ASF_initEyelinkConnection(Cfg, windowPtr, edfName);
 end
 %------------------------------------------------------------------
 
@@ -793,7 +800,7 @@ fprintf(1, '********** OPENING ONSCREEN WINDOW AND PERFORMING SOME DIAGNOSTICS *
 fprintf(1, '*****************************************************************************\n');
 
 if Cfg.Screen.useDefaultResolution
-    [windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber);%[windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, Cfg.Screen.color, Cfg.Screen.rect);
+    [windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, windowPtr, Cfg.Screen.rect);%[windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, Cfg.Screen.color, Cfg.Screen.rect);
 else
     [windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, Cfg.Screen.color, Cfg.Screen.rect, Cfg.Screen.Resolution.pixelSize, Cfg.Screen.numberOfBuffers);
 end
@@ -1098,7 +1105,7 @@ tStart = wakeupTime - Cfg.experimentStart;
 
 
 if Cfg.Eyetracking.doDriftCorrection
-    EyelinkDoDriftCorrect(Cfg.el);
+    EyelinkDoDriftCorrect(Cfg.Eyetracking.el);
 end
 
 %--------------------------------------------------------------------------
