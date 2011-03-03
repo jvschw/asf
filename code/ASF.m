@@ -325,14 +325,21 @@ Cfg.trialFileName = trialFileName;%'test.stm';
 % EYELINK
 %------------------------------------------------------------------
 if Cfg.Eyetracking.useEyelink
-    [edfFile, Cfg.el, Cfg.Eyetracking.status, Cfg.Eyetracking.stopkey, Cfg.Eyetracking.startkey, Cfg.Eyetracking.eye_used] = ASF_initEyelinkConnection(Cfg.Eyetracking.useEyelinkMouseMode, Cfg.Eyetracking.doCalibration, Cfg.Eyetracking.doDriftCorrection, windowPtr, Cfg.Eyetracking.edfName);
-    
     Screen('FillRect', windowPtr, Cfg.Screen.color);
     Screen('DrawText', windowPtr, 'Eyetracking Setup. Press:', 50, 70);
     Screen('DrawText', windowPtr, 'C for calibration.',  100, 120);
     Screen('DrawText', windowPtr, 'V for validation.',  100, 170);
     Screen('DrawText', windowPtr, 'ESC to start.',  100, 220);
     Screen('Flip', windowPtr);
+    Screen('TextSize', windowPtr, 12);
+
+    [edfFile, Cfg.el, Cfg.Eyetracking.status, Cfg.Eyetracking.stopkey, Cfg.Eyetracking.startkey, Cfg.Eyetracking.eye_used] =...
+        ASF_initEyelinkConnection(Cfg.Eyetracking.useEyelinkMouseMode, Cfg.Eyetracking.doCalibration, Cfg.Eyetracking.doDriftCorrection, windowPtr, Cfg.Eyetracking.edfName);
+    
+    Screen('FillRect', windowPtr, Cfg.Screen.color);
+    Screen('Flip', windowPtr);
+    Screen('TextSize', windowPtr, Cfg.Screen.fontSize);
+
 end
 %------------------------------------------------------------------
 
