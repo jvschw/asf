@@ -17,6 +17,7 @@ function res = ASF_readExpInfoNEW(expinfo)
 %COL 2: RT
 %COL 3: KEY
 %COL 4: CORRECTRESPONSE
+%COL 5: EVALUATION (KEY==CORRECTRESPONSE)
 nTrials = length(expinfo.TrialInfo);
 if nTrials == 0
     fprintf(1, 'WARNING NO TRIALS SAVED!\n')
@@ -38,12 +39,16 @@ else
             end
         end
         res(i, 4) = expinfo.TrialInfo(i).trial.correctResponse; %REQUESTED RESPONSE
-        if isfield(expinfo.TrialInfo(i), 'startRTMeasurement')
-            res(i, 5) = expinfo.TrialInfo(i).startRTMeasurement; %ABSOLUTE TIME OF START OF RT MEASUREMENT; diff(res(:, 5)) gives you trial onset asynchrony  
-        else
-            res(i, 5) = 0;
-        end
-%OBSOLETE, ALREADY CONTAINED IN COLUMN 3        
+        res(i, 5) = res(i, 3) == res(i, 4);
+
+        
+%         if isfield(expinfo.TrialInfo(i), 'startRTMeasurement')
+%             res(i, 5) = expinfo.TrialInfo(i).startRTMeasurement; %ABSOLUTE TIME OF START OF RT MEASUREMENT; diff(res(:, 5)) gives you trial onset asynchrony  
+%         else
+%             res(i, 5) = 0;
+%         end
+        
+        %OBSOLETE, ALREADY CONTAINED IN COLUMN 3
 %         if isempty(expinfo.TrialInfo(i).Response.key)
 %             res(i, 6) = NaN;
 %         else
