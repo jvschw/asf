@@ -8,6 +8,76 @@ function [edfFile, el, status, stopkey, startkey, eye_used] = ASF_initEyelinkCon
 % 01-08-2008 added code to show large calibration targets for
 %            low vision patients
 
+
+%JS VERSION
+% Initialize 'el' eyelink struct with proper defaults for output to
+% window 'w':
+
+el=ASF_EyelinkInitDefaults(windowPtr);
+
+if ~EyelinkInit([], 1)
+    fprintf('Eyelink Init aborted.\n');
+    %cleanup;
+    return;
+end
+% Perform tracker setup: The flag 1 requests interactive setup with
+% video display:
+result = Eyelink('StartSetup',1);
+
+
+% Perform drift correction: The special flags 1,1,1 request
+% interactive correction with video display:
+% You have to hit esc before return.
+rect = Screen(windowPtr, 'Rect');
+midX = round((rect(3) - rect(1)+1)/2);
+midY = round((rect(4) - rect(2)+1)/2);
+%result = Eyelink('DriftCorrStart',midX,midY,1,1,1);
+
+
+%textOut=1; %write reports from tracker to stdout
+%edfFile = sprintf('%s.edf', expName);
+edfFile = edfName; %WE NEED TO ADD CODE THAT MAKES SURE THAT THE FILENAME IS NOT LONGER THAN X CHARACTERS
+
+%--------initialize eyelink default settings-----------
+%el=EyelinkInitDefaults(windowPtr);
+%el=EyelinkInitDefaults(windowPtr, largeCalibTargets);
+
+status=Eyelink('command','link_sample_data = LEFT,RIGHT,GAZE,AREA,GAZERES,HREF,PUPIL,STATUS,INPUT');
+if status~=0
+    error('link_sample_data error, status: ', status); % make sure that we get gaze data from the Eyelink
+end
+
+%--------open data file if data are recorded-----------
+status=Eyelink('openfile',edfFile); % open file to record data to
+if status~=0
+    error('openfile error, status: ',status)
+end
+
+
+%--------start recording eye position--------
+status=Eyelink('startrecording'); 
+if status~=0
+    error('startrecording error, status: ',status)
+end
+
+%--------record a few samples before we actually start displaying--------
+WaitSecs(0.1); 
+
+%--------mark zero-plot time in data file--------
+status=Eyelink('message','SYNCTIME'); 
+if status~=0
+    error('message error, status: ',status)
+end
+
+%--------initialize keys--------
+stopkey=KbName('space');
+startkey=KbName('middle_mouse');
+
+%--------just an initializer to remind us to ask tracker which eye is tracked--------
+eye_used = -1; 
+return
+
+
 % if isempty(varargin)==0
 %     largeCalibTargets = 1;
 % else
@@ -36,10 +106,10 @@ edfFile = edfName; %WE NEED TO ADD CODE THAT MAKES SURE THAT THE FILENAME IS NOT
 el=EyelinkInitDefaults(windowPtr);
 %el=EyelinkInitDefaults(windowPtr, largeCalibTargets);
 
-eyelink('command', 'file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON');
-eyelink('command', 'link_sample_data  = LEFT,RIGHT,GAZE,AREA');
-eyelink('command', 'link_event_data = GAZE,GAZERES,HREF,AREA,VELOCITY');
-eyelink('command', 'link_event_filter = LEFT,RIGHT,FIXATION,BLINK,SACCADE,BUTTON');
+Eyelink('command', 'file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON');
+Eyelink('command', 'link_sample_data  = LEFT,RIGHT,GAZE,AREA');
+Eyelink('command', 'link_event_data = GAZE,GAZERES,HREF,AREA,VELOCITY');
+Eyelink('command', 'link_event_filter = LEFT,RIGHT,FIXATION,BLINK,SACCADE,BUTTON');
 
 % 
 % 
