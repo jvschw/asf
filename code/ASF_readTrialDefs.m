@@ -35,11 +35,16 @@ if exist(fname, 'file') == 2
         %NAMES FOR EACH LEVEL (PER FACTOR) 
         %{congruent incongruent left right'}
         %WE CAN PROCEED EXTRACTING RESPECTIVE NAMES
+        counter = 0;
         for i = 1:factorStruct.nFactors
             factorStruct.factorNames{i} = tmpfactorinfoX{factorStruct.nFactors+i};
             for j = 1:factorStruct.factorLevels(i)
+                counter = counter + 1;
+%                 factorStruct.levelNames{i, j} =...
+%                     tmpfactorinfoX{2*factorStruct.nFactors + (i-1)*factorStruct.factorLevels(i) + j};
                 factorStruct.levelNames{i, j} =...
-                    tmpfactorinfoX{2*factorStruct.nFactors + (i-1)*factorStruct.factorLevels(i) + j};
+                    tmpfactorinfoX{2*factorStruct.nFactors + counter};
+
             end
         end
         %WE END UP WITH SOMETHING LIKE THIS
