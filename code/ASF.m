@@ -507,6 +507,20 @@ fprintf(1, '***********************\n');
 fprintf(1, 'CHECKING FOR %s ... ', Cfg.stimNames);
 if exist(Cfg.stimNames, 'file') == 2
     fprintf(1, 'OK.\n');
+    %CHECK WHETHER STIMULUS FILES EXIST
+    fid = fopen(Cfg.stimNames);
+    while(~feof(fid))
+        aLine = fgetl(fid);
+        fprintf('Searching for %s ...', aLine);
+        if exist(aLine, 'file')
+            fprintf(1, 'OK.\n')
+        else
+            fclose(fid);
+            fprintf(1, ' FILE MISSING. ABORT.\n');
+            error('Missing File in STD.')
+        end
+    end
+    fclose(fid);
 else
     fprintf(1, 'does not exist. Program aborted\n');
     return
@@ -560,7 +574,7 @@ end
 %QUERY HARDWARE AND SOFTWARE FEATURES AND STORE THEM IN CFG
 [windowPtr, Cfg] = PTBInit(Cfg, expName);
 if isempty(windowPtr)
-    fprintf(1, 'Program aborted\n');
+    fprintf(1, 'Program aborted. Cannot create OpenGL screen.\n');
     return
 end
 
@@ -741,8 +755,11 @@ if exist(filename, 'file') == 2
     msg = sprintf('File %s already exists. Overwrite?', filename);
     ButtonName = questdlg(msg, 'Warning', 'Yes','No','No');
     if strcmp(ButtonName, 'No')
+        fprintf('User did not want to overwrite %s.\n', filename);
         %trialdef = [];
         return
+    else
+         fprintf('User OKed overwriting %s.\n', filename);
     end
 end
 
