@@ -205,7 +205,7 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %% ***ASF-MAIN LOOP***
 
 %DEFAULT CONFIGURATION
-Cfg.ASFVersion = 0.46;
+Cfg.ASFVersion = 0.47;
 
 %SCREEN SETTINGS
 if ~isfield(Cfg, 'Screen'), Cfg.Screen = []; else end;
@@ -227,6 +227,8 @@ if ~isfield(Cfg.Screen, 'useBackBuffer'), Cfg.Screen.useBackBuffer = 1; else end
 if ~isfield(Cfg, 'Sound'), Cfg.Sound= []; else end;
 if ~isfield(Cfg.Sound, 'soundMethod'), Cfg.Sound.soundMethod = 'none'; else end; %[{'none'}|'psychportaudio'|'audioplayer'|'wavplay'|'snd']
 
+if ~isfield(Cfg, 'Instruction'), Cfg.Instruction.showInstruction = 0; else end
+if ~isfield(Cfg.Instruction, 'instructionSlide'), Cfg.Instruction.instructionSlide = NaN; else end
 %TRIAL EXECUTION SETTINGS USED IN SHOWTRIAL AND POSSIBLY USED IN USER
 %DEFINED TRIAL FUNCTION
 if ~isfield(Cfg, 'userSuppliedTrialFunction'), Cfg.userSuppliedTrialFunction = []; else end;
@@ -305,8 +307,8 @@ if ~isfield(Cfg, 'enableTimingDiagnosis'), Cfg.enableTimingDiagnosis = 0; else e
 
 Cfg.stimNames = stimNames; %'stimdef.txt';
 Cfg.trialFileName = trialFileName;%'test.stm';
-
-%try
+Cfg.currentTrialNumber = 0;
+try
 %     Normally, only the statements between the TRY and CATCH are executed.
 %     However, if an error occurs while executing any of the statements, the
 %     error is captured into LASTERR and the statements between the CATCH
@@ -355,6 +357,30 @@ ASFSHOWTRIAL = determineRenderingFunction(Cfg);
 %EXPERIMENTAL CACHING OF FUNCTION POINTERS
 hASFWAITFORRESPONSE= @ASF_waitForResponse; %#ok<NASGU> %CHECK WHETHER THIS SPEEDS UP THE FIRST TRIAL OR NOT
 hASFXFLIP = @ASF_xFlip; %#ok<NASGU>
+
+
+
+
+%--------------------------------------------------------------------------
+%INSTRUCTION TRIAL
+%--------------------------------------------------------------------------
+if Cfg.Instruction.showInstruction
+    Screen('DrawTexture', windowPtr, Stimuli.tex(Cfg.Instruction.instructionSlide));
+    Screen('Flip', windowPtr);
+    
+    %WAIT FOR MOUSE BUTTON TO ADVANCE
+    ASF_waitForMousePressBenign(inf)
+    
+    %CLEAR SCREEN
+    Screen('FillRect', windowPtr, Cfg.Screen.color, Cfg.Screen.rect)
+    Screen('Flip', windowPtr);
+    
+    %WAIT FOR ONE SECOND
+    WaitSecs(1);
+end
+
+
+
 
 %SYNCHRONIZATION TO MR SCANNER
 if Cfg.synchToScanner
@@ -485,10 +511,22 @@ if Cfg.enableTimingDiagnosis
     timing_diagnosis(ExpInfo)
 end
 
-% catch
-%     % catch error
-%     PTBCatchError
-% end % try ... catch %
+catch ME
+    display(ME)
+    display(ME.message)
+    %EMERGENCY SAVE DATA
+    ExpInfo.Cfg = Cfg;
+    ExpInfo.TrialInfo = TrialInfo;
+    fprintf('TRYING TO SAVE THE DATA. IT MAY BE INCOMPLETE! ...');
+    cmd = sprintf('save %s ExpInfo', expName);
+    eval(cmd)
+    fprintf(1, 'DONE.\n')
+    
+    %     % catch error
+    Cfg = ASF_PTBExit(windowPtr, Cfg, 1);
+    
+    %     PTBCatchError
+end % try ... catch %
 
 
 
@@ -523,7 +561,7 @@ if exist(Cfg.stimNames, 'file') == 2
     fclose(fid);
 else
     fprintf(1, 'does not exist. Program aborted\n');
-    return
+    error('MISSING STD FILE')
 end
 
 fprintf(1, 'CHECKING FOR %s ... ', Cfg.trialFileName);
@@ -531,7 +569,7 @@ if exist(Cfg.trialFileName, 'file') == 2
     fprintf(1, 'OK.\n');
 else
     fprintf(1, 'does not exist. Program aborted\n');
-    return
+    error('MISSING TRD FILE')
 end
 
 
@@ -575,7 +613,7 @@ end
 [windowPtr, Cfg] = PTBInit(Cfg, expName);
 if isempty(windowPtr)
     fprintf(1, 'Program aborted. Cannot create OpenGL screen.\n');
-    return
+    error('PTBInit() FAILURE')
 end
 
 
@@ -601,7 +639,7 @@ end
 % so we do it only once
 Cfg = InitResponseDevice(Cfg);
 fprintf(1, 'LOADING ASF_waitForResponse into memory ... ');
-ASF_waitForResponse(Cfg, 0);
+ASF_waitForResponse(Cfg, 0.5); %100ms TIMEOUT
 fprintf(1, 'DONE\n');
 
 %FOR INPUT
@@ -757,7 +795,7 @@ if exist(filename, 'file') == 2
     if strcmp(ButtonName, 'No')
         fprintf('User did not want to overwrite %s.\n', filename);
         %trialdef = [];
-        return
+        error('PTBInit(). USER ABORT: User did not want to overwrite %s.\n', filename)
     else
          fprintf('User OKed overwriting %s.\n', filename);
     end
@@ -908,6 +946,32 @@ switch Cfg.responseDevice
         %set(recorder, 'StartFcn',  'global s; crsRTSStartStream(s, CRS.SS_IMMEDIATE);');
         %we might consider automatically sending a trigger
         fprintf(1, 'DONE\n');
+    
+    case 'VOICEKEYPPA'
+        fprintf(1, 'USING PSYCHPORT AUDIO VOICE-KEY AS RESPONSE DEVICE\n');
+        % Perform basic initialization of the sound driver, initialize for
+        % low-latency, high timing precision mode:
+        InitializePsychSound(1);
+ 
+        %APPLY DEFAULT SETTINGS UNLESS REQUESTED OTHERWISE
+        if ~isfield(Cfg, 'audio'), Cfg.audio = []; else end
+        if ~isfield(Cfg.audio, 'f'), Cfg.audio.f = 44100; else end
+        if ~isfield(Cfg.audio, 'nBits'),Cfg.audio.nBits = 16; else end
+        if ~isfield(Cfg.audio, 'nChannels'), Cfg.audio.nChannels = 2; else end
+        fprintf(1, '\tINITIALIZING PSYCHPORTAUDIO FOR VOICE KEY OPERATION...');
+
+        % Open the default audio device [], with mode 2 (== Only audio capture),
+        % and a required latencyclass of two 2 == low-latency mode, as well as
+        % a frequency of 44100 Hz and 2 sound channels for stereo capture. We also
+        % set the required latency to a pretty high 20 msecs. Why? Because we don't
+        % actually need low-latency here, we only need low-latency mode of
+        % operation so we get maximum timing precision -- Therefore we request
+        % low-latency mode, but loosen our requirement to 20 msecs.
+        %
+        % This returns a handle to the audio device:
+        Cfg.audio.pahandle = PsychPortAudio('Open', [], 2, 2, Cfg.audio.f, Cfg.audio.nChannels, [], 0.02);
+        PsychPortAudio('GetAudioData', Cfg.audio.pahandle, Cfg.audio.voiceKeyBufferInSecs); %MAKE THE DURATION A PARAMETER
+
         
     case 'LUMINAPARALLEL'
         fprintf(1, 'START INITIALIZING LUMINA ON PARALLEL PORT...\n');

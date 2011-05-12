@@ -25,6 +25,16 @@ switch Cfg.responseDevice
         x = [];
         y = [];
         [buttons, t0, t1] = WaitForKeyboard(Cfg, timeout);
+    
+    case 'VOICEKEY'
+        x = [];
+        y = [];
+        [buttons, t0, t1] = WaitForVoiceKey(Cfg, timeout);
+
+    case 'VOICEKEYPPA'
+        x = [];
+        y = [];
+        [buttons, t0, t1] = WaitForVoiceKeyPPA(Cfg, timeout);
 
     otherwise
         error(sprintf('Unknown response device %s', Cfg.responseDevice)) %#ok<SPERR>
@@ -40,6 +50,224 @@ if sum(buttons) > 1
     y = [];
 end
 
+function [keyCode, t0, t1] = WaitForVoiceKeyPPA(Cfg, timeout)
+buttons = 0;
+t0 = GetSecs;
+t1 = t0;
+x = NaN; y = NaN;
+keyCode = NaN;
+
+%VOICEKEY
+PsychPortAudio('Start', Cfg.audio.pahandle, 0, 0, 1);
+WaitSecs(timeout);
+
+% Stop sound capture: End of response period.
+PsychPortAudio('Stop', Cfg.audio.pahandle);
+
+% Fetch all about 5 seconds of audiodata at once:
+[audiodata offset overflow tCaptureStart]= PsychPortAudio('GetAudioData', Cfg.audio.pahandle);
+
+this_response.wavname = sprintf('%s_trial_%05d.wav', Cfg.name, Cfg.currentTrialNumber);
+fprintf(1, 'Writing %s ... ', this_response.wavname);
+wavwrite(audiodata, Cfg.audio.f, Cfg.audio.nBits, this_response.wavname);
+fprintf(1, 'Done.\n');
+
+function [keyCode, t0, t1] = WaitForVoiceKey(Cfg, timeout)
+buttons = 0;
+t0 = GetSecs;
+t1 = t0;
+x = NaN; y = NaN;
+keyCode = NaN;
+
+%VOICEKEY
+record(Cfg.audio.recorder, timeout);       %RECORD for two seconds
+%MAKE SURE WE ARE NOT RECORDING ANYMORE
+while(isrecording(Cfg.audio.recorder))
+end
+%GET DATA
+audioarray = getaudiodata(Cfg.audio.recorder);
+this_response.key = [];
+this_response.wavname = sprintf('%s_trial_%05d.wav', Cfg.name, Cfg.currentTrialNumber);
+startstim = 0;
+t = (0:length(audioarray)-1)./Cfg.audio.f;
+audioarray_stimlocked = audioarray(t >= startstim);
+t2 =    (0:length(audioarray_stimlocked)-1)./Cfg.audio.f;
+fprintf(1, 'Writing %s ... ', this_response.wavname);
+wavwrite(audioarray_stimlocked, Cfg.audio.f, Cfg.audio.nBits, this_response.wavname);
+fprintf(1, 'Done.\n');
+
+%rt = handle_audio_data(audioarray, Cfg.audio, 0, this_response.wavname, Cfg.plotVOT)*1000;
+%t1 = t0 + rt;
+
+%% handle_audio_data
+% compute voice onset time from audio data
+function rt = handle_audio_data(audioarray, cfg_audio, startstim, wavname, plotVOT)
+%    wavwrite(audioarray, audio.f, audio.nBits, wavname)
+%    plot((1:length(audioarray))./audio.f, [audioarray, sqrt(audioarray.^2)])
+%    legend({'data', 'demeaned', 'abs'})
+t = (0:length(audioarray)-1)./cfg_audio.f;
+
+audioarray_stimlocked = audioarray(t >= startstim);
+t2 =    (0:length(audioarray_stimlocked)-1)./cfg_audio.f;
+
+wavwrite(audioarray_stimlocked, cfg_audio.f, cfg_audio.nBits, wavname);
+cfg.fnames = wavname;
+rt = get_rts(cfg);
+
+if plotVOT
+    subplot(2, 1, 1)
+    plot(t, audioarray)
+    ylim = get(gca, 'ylim');
+    hold on
+    plot([startstim, startstim], ylim, 'r')
+    hold off
+
+    subplot(2, 1, 2)
+    plot(t2, audioarray_stimlocked)
+
+    hold on
+    ylim = get(gca, 'ylim');
+    plot([rt, rt], ylim, 'g')
+    hold off
+    set(gcf, 'name', sprintf('%s, RT = %f', wavname, rt))
+    drawnow
+end
+
+function rt = get_rts(cfg)
+%%function rt = get_rts(cfg)
+%%EXMPLE CALL:
+%cfg.thresh = 0.2;
+%cfg.fnames = '*.wav';
+%cfg.verbose = 0;
+%rt = get_rts(cfg)
+
+if(~isfield(cfg, 'thresh')), cfg.thresh = 0.2; end
+if(~isfield(cfg, 'fnames')), cfg.fnames = '*.wav'; end
+if(~isfield(cfg, 'verbose')), cfg.verbose = 0; end
+if(~isfield(cfg, 'ShowRTAnalysis')), cfg.ShowRTAnalysis = 0; end
+
+%cfg.ShowRTAnalysis = 1;
+d = dir(cfg.fnames);
+nFiles = length(d);
+
+if nFiles > 1
+    h = waitbar(0,'Please wait...');
+    rt(nFiles) = 0;
+else
+    h = [];
+end
+for i = 1:nFiles
+    if ~isempty(h)
+        waitbar(i/nFiles,h)
+    end
+    fname = d(i).name;
+    %    [y, fs, nbits, opts] =   wavread(fname, [22050, 88000]);
+    [y, fs, nbits, opts] =   wavread(fname);
+
+    t = (0:length(y)-1)/fs;
+    
+    %REMOVE BEGINNING PERIOD
+    cases_to_remove = find(t < 0.15);
+    y(cases_to_remove) = [];
+    t(cases_to_remove) = [];
+    
+    if cfg.ShowRTAnalysis
+        figure
+        plot_wav(t, y)
+        set(gcf, 'Name', 'Original Signal')
+    end
+    y = y - mean(y);
+    y = y - min(y);
+    y = y./max(y)*2-1;
+    if cfg.ShowRTAnalysis
+        figure
+        plot_wav(t, y)
+        set(gcf, 'Name', 'Normalized Signal')
+    end
+
+    ey = sqrt(y.^2);
+    bl = mean(ey(1:max(find((t-t(1))<0.2))));
+
+
+
+
+    cfg.FilterLengthInSamples = 100;
+    b = ones(cfg.FilterLengthInSamples, 1)/cfg.FilterLengthInSamples;  % cfg.FilterLengthInSamples point averaging filter
+    eyf = filtfilt(b, 1, ey); % Noncausal filtering; smothes data without delay
+
+    if cfg.ShowRTAnalysis
+        figure
+        plot_wav(t, ey);
+        hold on
+        plot(t, eyf, 'Color', 'r', 'LineWidth', 3);
+        hold off
+        set(gcf, 'Name', 'Power')
+        ylabel('sqrt(y^2)')
+        legend('Power', 'Smoothed Power')
+        
+    end
+
+    current_thresh = cfg.thresh;
+    %     first_sample = [];
+    %     %LOOK FOR ONSET, IF NOTHING FOUND DECREASE THRESHOLD
+    %     while isempty(first_sample)
+    %         first_sample = min(find(eyf-bl >current_thresh));
+    %         if isempty(first_sample)
+    %             current_thresh = current_thresh*.9;
+    %         end
+    %
+    %     end
+    first_sample = min(find(eyf-bl >current_thresh));
+    if isempty(first_sample)
+        rt(i) = NaN;
+    else
+        rt(i) = t(first_sample);
+    end
+
+    if cfg.ShowRTAnalysis
+        figure
+        plot_wav(t, eyf)
+        set(gcf, 'Name', 'Smoothed Power')
+        ylabel('sqrt(y^2)')
+        hold on
+        tbl = t(find(t<0.2));
+        plot([tbl(1), tbl(end)], [bl, bl], 'Color', [.6 .6 .6], 'LineWidth', 3)
+        plot([t(1), t(end)], [bl+current_thresh, bl+current_thresh], ':', 'Color', [.6 .6 .6], 'LineWidth', 3)
+        ylim = get(gca, 'ylim');
+        plot([rt(i), rt(i)], ylim, 'r', 'LineWidth', 3)
+        hold off
+    end
+
+    if cfg.verbose
+        subplot(2,2,1)
+        plot(t, [y, ey])
+
+        subplot(2,2,2)
+        lh = plot(t, [ey, eyf]);
+        set(lh(2), 'LineWidth', 2)
+        legend('org', 'filt')
+        ylim = get(gca, 'ylim');
+        hold on
+        plot([rt(i), rt(i)], ylim, 'r')
+        hold off
+        pause
+    end
+end
+if ~isempty(h)
+    close(h)
+end
+if cfg.verbose
+    figure
+    plot(rt, 'k.')
+    figure
+    plot(sort(rt), 'k.')
+end
+
+function ph = plot_wav(t, y)
+set(gcf, 'DefaultAxesFontSize', 16)
+ph = plot(t, y, 'k', 'LineWidth', 2);
+xlabel('Time [s]')
+ylabel('Signal')
 
 %% WaitForKeyboard
 function [keyCode, t0, t1] = WaitForKeyboard(Cfg, timeout)

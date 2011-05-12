@@ -22,7 +22,9 @@ switch errorFlag
         Screen('DrawText', windowPtr, '... THANKS ...', 10, 70, 255);
         Screen('Flip', windowPtr);
         WaitSecs(1);
+        
     otherwise
+        %TRY SAVING THE DATA
         fprintf(1, 'DUE TO ERROR ... \n%s\n', errorMsg);
 end
 
@@ -53,6 +55,14 @@ switch Cfg.Sound.soundMethod
     case 'audioplayer'
         warning('method for closing audioplayer not yet programmed')
     case 'wavplay'
+end
+
+switch Cfg.responseDevice
+    case 'VoiceKeyPPA'
+        fprintf(1, 'Closing PsychPortAudio ...');
+        % Close the audio device:
+        PsychPortAudio('Close', Cfg.audio.pahandle);
+        fprintf(1, ' DONE.\n');
 end
 
 %RESORE TO NORMAL PRIORITY
