@@ -941,7 +941,7 @@ switch Cfg.responseDevice
         if ~isfield(Cfg.audio, 'f'), Cfg.audio.f = 44100; else end
         if ~isfield(Cfg.audio, 'nBits'),Cfg.audio.nBits = 16; else end
         if ~isfield(Cfg.audio, 'nChannels'), Cfg.audio.nChannels = 1; else end
-        
+        if ~isfield(Cfg.audio, 'outputPath'), Cfg.audio.outputPath = ''; else end
         Cfg.audio.recorder = audiorecorder(Cfg.audio.f, Cfg.audio.nBits, Cfg.audio.nChannels);
         %set(recorder, 'StartFcn',  'global s; crsRTSStartStream(s, CRS.SS_IMMEDIATE);');
         %we might consider automatically sending a trigger
@@ -958,6 +958,8 @@ switch Cfg.responseDevice
         if ~isfield(Cfg.audio, 'f'), Cfg.audio.f = 44100; else end
         if ~isfield(Cfg.audio, 'nBits'),Cfg.audio.nBits = 16; else end
         if ~isfield(Cfg.audio, 'nChannels'), Cfg.audio.nChannels = 2; else end
+        if ~isfield(Cfg.audio, 'outputPath'), Cfg.audio.outputPath = ''; else end
+        if ~isfield(Cfg.audio, 'voiceKeyBufferInSecs'), Cfg.audio.voiceKeyBufferInSecs = 3; else end
         fprintf(1, '\tINITIALIZING PSYCHPORTAUDIO FOR VOICE KEY OPERATION...');
 
         % Open the default audio device [], with mode 2 (== Only audio capture),

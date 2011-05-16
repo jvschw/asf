@@ -19,7 +19,7 @@ if(~isfield(Cfg, 'verbose')), Cfg.verbose = 0; end
 if(~isfield(Cfg, 'ShowRTAnalysis')), Cfg.ShowRTAnalysis = 0; end
 if(~isfield(Cfg, 'playWav')), Cfg.playWav = 0; end
 fig = figure;
-
+dataDir = fileparts(Cfg.fnames);
 %Cfg.ShowRTAnalysis = 1;
 d = dir(Cfg.fnames);
 nFiles = length(d);
@@ -36,7 +36,7 @@ for i = 1:nFiles
     end
     fname = d(i).name;
     %    [y, fs, nbits, opts] =   wavread(fname, [22050, 88000]);
-    [y, fs, nbits, opts] =   wavread(fname);
+    [y, fs, nbits, opts] =   wavread(fullfile(dataDir, fname));
     
     %TREATMENT FOR STEREODATA: AVERAGE CHANNELS
     if size(y, 1) == 2

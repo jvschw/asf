@@ -67,7 +67,7 @@ PsychPortAudio('Stop', Cfg.audio.pahandle);
 % Fetch all about 5 seconds of audiodata at once:
 [audiodata offset overflow tCaptureStart]= PsychPortAudio('GetAudioData', Cfg.audio.pahandle);
 
-this_response.wavname = sprintf('%s_trial_%05d.wav', Cfg.name, Cfg.currentTrialNumber);
+this_response.wavname = fullfile(Cfg.audio.outputPath, sprintf('%s_trial_%05d.wav', Cfg.name, Cfg.currentTrialNumber));
 fprintf(1, 'Writing %s ... ', this_response.wavname);
 wavwrite(audiodata, Cfg.audio.f, Cfg.audio.nBits, this_response.wavname);
 fprintf(1, 'Done.\n');
