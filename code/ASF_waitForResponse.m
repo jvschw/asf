@@ -50,27 +50,42 @@ if sum(buttons) > 1
     y = [];
 end
 
-function [keyCode, t0, t1] = WaitForVoiceKeyPPA(Cfg, timeout)
-buttons = 0;
+function [buttons, t0, t1] = WaitForVoiceKeyPPA(Cfg, timeout)
+buttons = [0, 0, 0, 0, 0, 1]; %BUTTON 6
 t0 = GetSecs;
 t1 = t0;
-x = NaN; y = NaN;
-keyCode = NaN;
+% x = NaN; y = NaN;
+% keyCode = NaN;
 
 %VOICEKEY
-PsychPortAudio('Start', Cfg.audio.pahandle, 0, 0, 1);
-WaitSecs(timeout);
+% %START ACQUISITION
+% PsychPortAudio('Start', Cfg.audio.pahandle, 0, 0, 1); 
+% %THE THIRD PARAMETER (waitForStart) IS SET TO 1, THIS MEANS THAT THIS
+% %FUNCTION ONLY RETURNS AFTER ACQUISITION HAS REALLY STARTED, WHICH ALLOWS
+% %ASSESSING THE DELAY OF THE ACQUISITION. WE RETURN THE ACTUAL START TIME AS REACTION TIME
+% t1 = GetSecs;
 
-% Stop sound capture: End of response period.
-PsychPortAudio('Stop', Cfg.audio.pahandle);
+%START ACQUISITION
+PsychPortAudio('Start', Cfg.audio.pahandle, 0, 0, 0); 
+%THE THIRD PARAMETER (waitForStart) IS SET TO 0, THIS MEANS THAT THIS
+%FUNCTION IMMEDIATELY RETURNS. WE RETRIEVE THE ACTUAL START TIME OF THE FIRST SAMPLE WHEN WE CALL PsychPort('GetAudio')
+t1 = GetSecs;
 
-% Fetch all about 5 seconds of audiodata at once:
-[audiodata offset overflow tCaptureStart]= PsychPortAudio('GetAudioData', Cfg.audio.pahandle);
 
-this_response.wavname = fullfile(Cfg.audio.outputPath, sprintf('%s_trial_%05d.wav', Cfg.name, Cfg.currentTrialNumber));
-fprintf(1, 'Writing %s ... ', this_response.wavname);
-wavwrite(audiodata, Cfg.audio.f, Cfg.audio.nBits, this_response.wavname);
-fprintf(1, 'Done.\n');
+
+% WaitSecs(timeout);
+% 
+% % Stop sound capture: End of response period.
+% PsychPortAudio('Stop', Cfg.audio.pahandle);
+% 
+% % Fetch all about x seconds of audiodata at once:
+% [audiodata offset overflow tCaptureStart]= PsychPortAudio('GetAudioData', Cfg.audio.pahandle);
+% 
+% this_response.wavname = fullfile(Cfg.audio.outputPath, sprintf('%s_trial_%05d.wav', Cfg.name, Cfg.currentTrialNumber));
+% fprintf(1, 'Writing %s ... ', this_response.wavname);
+% %MAKE SURE TO WRITE WAV FILES AS [nSamples, nChannels]
+% wavwrite(audiodata', Cfg.audio.f, Cfg.audio.nBits, this_response.wavname);
+% fprintf(1, 'Done.\n');
 
 function [keyCode, t0, t1] = WaitForVoiceKey(Cfg, timeout)
 buttons = 0;

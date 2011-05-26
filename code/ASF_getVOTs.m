@@ -39,14 +39,14 @@ for i = 1:nFiles
     [y, fs, nbits, opts] =   wavread(fullfile(dataDir, fname));
     
     %TREATMENT FOR STEREODATA: AVERAGE CHANNELS
-    if size(y, 1) == 2
-        y = mean(y);
+    if opts.fmt.nChannels == 2
+        y = mean(y, 2);
     end
     t = (0:length(y)-1)/fs;
     
     %REMOVE BEGINNING PERIOD
     cases_to_remove = find(t < 0.15);
-    y(:, cases_to_remove) = [];
+    y(cases_to_remove) = [];
     t(cases_to_remove) = [];
     
     %     if Cfg.ShowRTAnalysis
@@ -57,7 +57,7 @@ for i = 1:nFiles
     
     %NORMALIZE
     y = y - mean(y);
-    if max(abs(y) > 0.2)
+    if max(abs(y) > Cfg.thresh)
         y = y - min(y);
         y = y./max(y)*2-1;
         %     if Cfg.ShowRTAnalysis

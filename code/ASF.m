@@ -206,6 +206,8 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 
 %DEFAULT CONFIGURATION
 Cfg.ASFVersion = 0.47;
+%BETA FEATURES
+if ~isfield(Cfg, 'instructionTrial'), Cfg.instructionTrial = []; else end 
 
 %SCREEN SETTINGS
 if ~isfield(Cfg, 'Screen'), Cfg.Screen = []; else end;
@@ -308,7 +310,9 @@ if ~isfield(Cfg, 'enableTimingDiagnosis'), Cfg.enableTimingDiagnosis = 0; else e
 Cfg.stimNames = stimNames; %'stimdef.txt';
 Cfg.trialFileName = trialFileName;%'test.stm';
 Cfg.currentTrialNumber = 0;
-try
+
+
+%try
 %     Normally, only the statements between the TRY and CATCH are executed.
 %     However, if an error occurs while executing any of the statements, the
 %     error is captured into LASTERR and the statements between the CATCH
@@ -362,21 +366,13 @@ hASFXFLIP = @ASF_xFlip; %#ok<NASGU>
 
 
 %--------------------------------------------------------------------------
-%INSTRUCTION TRIAL
+%INSTRUCTION TRIAL (BETA STADIUM)
 %--------------------------------------------------------------------------
 if Cfg.Instruction.showInstruction
-    Screen('DrawTexture', windowPtr, Stimuli.tex(Cfg.Instruction.instructionSlide));
-    Screen('Flip', windowPtr);
-    
-    %WAIT FOR MOUSE BUTTON TO ADVANCE
-    ASF_waitForMousePressBenign(inf)
-    
-    %CLEAR SCREEN
-    Screen('FillRect', windowPtr, Cfg.Screen.color, Cfg.Screen.rect)
-    Screen('Flip', windowPtr);
-    
-    %WAIT FOR ONE SECOND
-    WaitSecs(1);
+    if ~isempty(Cfg.instructionTrial)
+        INSTRUCTTRIAL = Cfg.instructionTrial;
+        INSTRUCTTRIAL(windowPtr, Cfg, Stimuli);
+    end
 end
 
 
@@ -511,22 +507,22 @@ if Cfg.enableTimingDiagnosis
     timing_diagnosis(ExpInfo)
 end
 
-catch ME
-    display(ME)
-    display(ME.message)
-    %EMERGENCY SAVE DATA
-    ExpInfo.Cfg = Cfg;
-    ExpInfo.TrialInfo = TrialInfo;
-    fprintf('TRYING TO SAVE THE DATA. IT MAY BE INCOMPLETE! ...');
-    cmd = sprintf('save %s ExpInfo', expName);
-    eval(cmd)
-    fprintf(1, 'DONE.\n')
-    
-    %     % catch error
-    Cfg = ASF_PTBExit(windowPtr, Cfg, 1);
-    
-    %     PTBCatchError
-end % try ... catch %
+% catch ME
+%     display(ME)
+%     display(ME.message)
+%     %EMERGENCY SAVE DATA
+%     ExpInfo.Cfg = Cfg;
+%     ExpInfo.TrialInfo = TrialInfo;
+%     fprintf('TRYING TO SAVE THE DATA. IT MAY BE INCOMPLETE! ...');
+%     cmd = sprintf('save %s ExpInfo', expName);
+%     eval(cmd)
+%     fprintf(1, 'DONE.\n')
+%     
+%     %     % catch error
+%     Cfg = ASF_PTBExit(windowPtr, Cfg, 1);
+%     
+%     %     PTBCatchError
+% end % try ... catch %
 
 
 
@@ -932,6 +928,7 @@ switch Cfg.responseDevice
         fprintf(1, 'USING MOUSE AS RESPONSE DEVICE\n');
         
     case 'VOICEKEY'
+        %WILL BE REPLACED BY VOICEKEYPPA ASAP
         %RESULTS SHOULD BE BEST IF PROGRAM WAITS FOR A VERTICAL SYNCH BEFORE
         %STARTING THE AUDIORECORDER
         fprintf(1, 'USING VOICE-KEY AS RESPONSE DEVICE\n');
@@ -2044,10 +2041,10 @@ set(Cfg.hardware.DigitalOutput.mydio, 'TimerPeriod', 0.001)
 
 %SUGGESTED BY AL
 %CHECK!
-%Cfg.hardware.parallel.mydio = digitalio('parallel');
-%set(Cfg.hardware.parallel.mydio, 'TimerPeriod', 0.001)
-%addline(Cfg.hardware.parallel.mydio, 0:7, 'out', 'TriggerPort')
-%Cfg.hardware.parallel.dioinfos = getvalue(Cfg.hardware.parallel.mydio)
+Cfg.hardware.parallel.mydio = digitalio('parallel');
+set(Cfg.hardware.parallel.mydio, 'TimerPeriod', 0.001)
+addline(Cfg.hardware.parallel.mydio, 0:7, 'out', 'TriggerPort')
+Cfg.hardware.parallel.dioinfos = getvalue(Cfg.hardware.parallel.mydio)
 
 %
 % PortID Pins         Description
