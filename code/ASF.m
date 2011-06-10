@@ -205,9 +205,9 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %% ***ASF-MAIN LOOP***
 
 %DEFAULT CONFIGURATION
-Cfg.ASFVersion = 0.47;
+Cfg.ASFVersion = 0.48;
 %BETA FEATURES
-if ~isfield(Cfg, 'instructionTrial'), Cfg.instructionTrial = []; else end 
+if ~isfield(Cfg, 'instructionTrial'), Cfg.instructionTrial = []; else end
 
 %SCREEN SETTINGS
 if ~isfield(Cfg, 'Screen'), Cfg.Screen = []; else end;
@@ -312,217 +312,217 @@ Cfg.trialFileName = trialFileName;%'test.stm';
 Cfg.currentTrialNumber = 0;
 
 
-%try
-%     Normally, only the statements between the TRY and CATCH are executed.
-%     However, if an error occurs while executing any of the statements, the
-%     error is captured into LASTERR and the statements between the CATCH
-%     and END are executed.  If an error occurs within the CATCH statements,
-%     execution will stop unless caught by another TRY...CATCH block.  The
-%     error string produced by a failed TRY block can be obtained with
-%     LASTERR.
-
-
-%------------------------------------------------------------------
-% INITIALIZATION
-%------------------------------------------------------------------
-[ExpInfo, Cfg, trial, windowPtr, Stimuli] = ASFInit(Cfg, expName);
-
-%------------------------------------------------------------------
-% EYELINK
-%------------------------------------------------------------------
-if Cfg.Eyetracking.useEyelink
-    Screen('FillRect', windowPtr, Cfg.Screen.color);
-    Screen('DrawText', windowPtr, 'Eyetracking Setup. Press:', 50, 70);
-    Screen('DrawText', windowPtr, 'C for calibration.',  100, 120);
-    Screen('DrawText', windowPtr, 'V for validation.',  100, 170);
-    Screen('DrawText', windowPtr, 'ESC to start.',  100, 220);
-    Screen('Flip', windowPtr);
-    Screen('TextSize', windowPtr, 12);
-
-    [edfFile, Cfg.el, Cfg.Eyetracking.status, Cfg.Eyetracking.stopkey, Cfg.Eyetracking.startkey, Cfg.Eyetracking.eye_used] =...
-        ASF_initEyelinkConnection(Cfg.Eyetracking.useEyelinkMouseMode, Cfg.Eyetracking.doCalibration, Cfg.Eyetracking.doDriftCorrection, windowPtr, Cfg.Eyetracking.edfName);
+try
+    %     Normally, only the statements between the TRY and CATCH are executed.
+    %     However, if an error occurs while executing any of the statements, the
+    %     error is captured into LASTERR and the statements between the CATCH
+    %     and END are executed.  If an error occurs within the CATCH statements,
+    %     execution will stop unless caught by another TRY...CATCH block.  The
+    %     error string produced by a failed TRY block can be obtained with
+    %     LASTERR.
     
-    Screen('FillRect', windowPtr, Cfg.Screen.color);
-    Screen('Flip', windowPtr);
-    Screen('TextSize', windowPtr, Cfg.Screen.fontSize);
-
-end
-%------------------------------------------------------------------
-
-%------------------------------------------------------------------
-% START EXPERIMENT AND LOOP THROUGH TRIALS
-%------------------------------------------------------------------
-Cfg.nTrials = length(trial); %determine number of trials to present
-
-%DEPENDING ON DIFFERENT CONFIGURATION SETTINGS THE PROGRAM USES
-%DIFFERENT BUILT IN OR USER-SUPPLIED FUNCTIONS TO PRESENT A TRIAL
-ASFSHOWTRIAL = determineRenderingFunction(Cfg);
-
-%EXPERIMENTAL CACHING OF FUNCTION POINTERS
-hASFWAITFORRESPONSE= @ASF_waitForResponse; %#ok<NASGU> %CHECK WHETHER THIS SPEEDS UP THE FIRST TRIAL OR NOT
-hASFXFLIP = @ASF_xFlip; %#ok<NASGU>
-
-
-
-
-%--------------------------------------------------------------------------
-%INSTRUCTION TRIAL (BETA STADIUM)
-%--------------------------------------------------------------------------
-if Cfg.Instruction.showInstruction
-    if ~isempty(Cfg.instructionTrial)
-        INSTRUCTTRIAL = Cfg.instructionTrial;
-        INSTRUCTTRIAL(windowPtr, Cfg, Stimuli);
+    
+    %------------------------------------------------------------------
+    % INITIALIZATION
+    %------------------------------------------------------------------
+    [ExpInfo, Cfg, trial, windowPtr, Stimuli] = ASFInit(Cfg, expName);
+    
+    %------------------------------------------------------------------
+    % EYELINK
+    %------------------------------------------------------------------
+    if Cfg.Eyetracking.useEyelink
+        Screen('FillRect', windowPtr, Cfg.Screen.color);
+        Screen('DrawText', windowPtr, 'Eyetracking Setup. Press:', 50, 70);
+        Screen('DrawText', windowPtr, 'C for calibration.',  100, 120);
+        Screen('DrawText', windowPtr, 'V for validation.',  100, 170);
+        Screen('DrawText', windowPtr, 'ESC to start.',  100, 220);
+        Screen('Flip', windowPtr);
+        Screen('TextSize', windowPtr, 12);
+        
+        [edfFile, Cfg.el, Cfg.Eyetracking.status, Cfg.Eyetracking.stopkey, Cfg.Eyetracking.startkey, Cfg.Eyetracking.eye_used] =...
+            ASF_initEyelinkConnection(Cfg.Eyetracking.useEyelinkMouseMode, Cfg.Eyetracking.doCalibration, Cfg.Eyetracking.doDriftCorrection, windowPtr, Cfg.Eyetracking.edfName);
+        
+        Screen('FillRect', windowPtr, Cfg.Screen.color);
+        Screen('Flip', windowPtr);
+        Screen('TextSize', windowPtr, Cfg.Screen.fontSize);
+        
     end
-end
-
-
-
-
-%SYNCHRONIZATION TO MR SCANNER
-if Cfg.synchToScanner
-    ASF_waitForScannerSynch(windowPtr, Cfg);
-end
-Cfg.experimentStart = GetSecs; %store time when experiment was started
-%WAIT FOR ADDITIONAL PULSES?
-if Cfg.synchToScanner > 1
-    for iCount = 1:Cfg.synchToScanner-1
+    %------------------------------------------------------------------
+    
+    %------------------------------------------------------------------
+    % START EXPERIMENT AND LOOP THROUGH TRIALS
+    %------------------------------------------------------------------
+    Cfg.nTrials = length(trial); %determine number of trials to present
+    
+    %DEPENDING ON DIFFERENT CONFIGURATION SETTINGS THE PROGRAM USES
+    %DIFFERENT BUILT IN OR USER-SUPPLIED FUNCTIONS TO PRESENT A TRIAL
+    ASFSHOWTRIAL = determineRenderingFunction(Cfg);
+    
+    %EXPERIMENTAL CACHING OF FUNCTION POINTERS
+    hASFWAITFORRESPONSE= @ASF_waitForResponse; %#ok<NASGU> %CHECK WHETHER THIS SPEEDS UP THE FIRST TRIAL OR NOT
+    hASFXFLIP = @ASF_xFlip; %#ok<NASGU>
+    
+    
+    
+    
+    %--------------------------------------------------------------------------
+    %INSTRUCTION TRIAL (BETA STADIUM)
+    %--------------------------------------------------------------------------
+    if Cfg.Instruction.showInstruction
+        if ~isempty(Cfg.instructionTrial)
+            INSTRUCTTRIAL = Cfg.instructionTrial;
+            INSTRUCTTRIAL(windowPtr, Cfg, Stimuli);
+        end
+    end
+    
+    
+    
+    
+    %SYNCHRONIZATION TO MR SCANNER
+    if Cfg.synchToScanner
         ASF_waitForScannerSynch(windowPtr, Cfg);
     end
-end
-
-%------------------------------------------------------------------
-% EYELINK
-%------------------------------------------------------------------
-if Cfg.Eyetracking.useEyelink
-    status=Eyelink('message', 'EXPERIMENTSTART');
-end
-%------------------------------------------------------------------
-
-if Cfg.onlineFeedback
-    ASF_onlineFeedback(ExpInfo, trial, [], 0)
-end
-
-for i = 1:Cfg.nTrials
-    %s = whos;
-    %fprintf(1, '%12d bytes used\n', sum(vertcat(s.bytes)));
-    fprintf(1, 'TRIAL %3d/%d: ', i, Cfg.nTrials); %feedback on operator screen
-    
-    %THIS WILL HAVE TO BE DONE AT A LATER POINT
-    %IT WOULD HAVE BEEN EASY WITH BITMAPS ONLY
-    %BUT I NEED TO COME UP WITH A WAY THAT TELLS ME FOR VIDEOS
-    %TO WHICH VIDEO AND FRAME NUMBER A CERTAIN pageNumber RELATES
-    %AND ALL OF THIS WITHOUT ACTUALLY READING THE VIDEOS BECAUSE
-    %THAT WOUL PARTIALLY DEFEAT THE PUTPOSE OF ONLINE LOADING
-    %     Cfg.loadStimuliDuringExperiment = 1;
-    %     if Cfg.loadStimuliDuringExperiment
-    %         idxUsedStimuli = unique(trial(i).pageNumber);
-    %             [errorFlag, aStimulus, frameCounter] =...
-    %         ASF_readStimulus(stimNames{iStimulus}, windowPtr, Cfg);
-    %     end
-    
-    %SHOW TRIAL
-    Cfg.currentTrialNumber = i;
-    this_TrialInfo = ASFSHOWTRIAL(trial(i), windowPtr, Stimuli, Cfg);
-    %PREALLOCATE MEMORY FOR TRIALS
-    if i == 1
-        TrialInfo = repmat(this_TrialInfo, [1, Cfg.nTrials]);
-    end
-    %CONSIDER ADDING A CHECK HERE WHETHER ALL FIELDS IN TRIALINFO EXIST
-    %ESPECIALLY PROGRAMMERS OF PLUGIN FNCTIONS MAY FORGET SOMETHING
-    %check_trialinfo(TrialInfo(i));
-    TrialInfo(i) = this_TrialInfo;
-    
-    if Cfg.onlineFeedback
-        %FEEDBACK ON OPERATOR SCREEN
-        fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n', fix(TrialInfo(i).Response.RT), TrialInfo(i).Response.key, trial(i).correctResponse);
-        ASF_onlineFeedback(ExpInfo, trial, TrialInfo, i)
-    else
-        fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n', fix(TrialInfo(i).Response.RT), TrialInfo(i).Response.key, trial(i).correctResponse);
+    Cfg.experimentStart = GetSecs; %store time when experiment was started
+    %WAIT FOR ADDITIONAL PULSES?
+    if Cfg.synchToScanner > 1
+        for iCount = 1:Cfg.synchToScanner-1
+            ASF_waitForScannerSynch(windowPtr, Cfg);
+        end
     end
     
     %------------------------------------------------------------------
     % EYELINK
     %------------------------------------------------------------------
     if Cfg.Eyetracking.useEyelink
-        %              if(err~=0)
-        %                 error('checkrecording problem, status: %d', err)
-        %                 break;
-        %             end
-        %el.TRIAL_OK = 0;
-        Cfg.Eyetracking.status = Eyelink('message', 'TRIALEND');
-        
-        %OLDER MATLAB VERSIONS CANNOT HANDLE THIS
-        %[~, ~, keyCode] = KbCheck;
-        [dummy1, dummy2, keyCode] = KbCheck;
-        % if spacebar was pressed stop display
-        if keyCode(Cfg.Eyetracking.stopkey)
-            break;
-        end
+        status=Eyelink('message', 'EXPERIMENTSTART');
     end
     %------------------------------------------------------------------
     
-    %fprintf(1, '\n');
+    if Cfg.onlineFeedback
+        ASF_onlineFeedback(ExpInfo, trial, [], 0)
+    end
     
-    %FOR MEMORY DEBUGGING
-    %s = whos;
-    %fprintf(1, '%12d bytes used\n', sum(vertcat(s.bytes)));
+    for i = 1:Cfg.nTrials
+        %s = whos;
+        %fprintf(1, '%12d bytes used\n', sum(vertcat(s.bytes)));
+        fprintf(1, 'TRIAL %3d/%d: ', i, Cfg.nTrials); %feedback on operator screen
+        
+        %THIS WILL HAVE TO BE DONE AT A LATER POINT
+        %IT WOULD HAVE BEEN EASY WITH BITMAPS ONLY
+        %BUT I NEED TO COME UP WITH A WAY THAT TELLS ME FOR VIDEOS
+        %TO WHICH VIDEO AND FRAME NUMBER A CERTAIN pageNumber RELATES
+        %AND ALL OF THIS WITHOUT ACTUALLY READING THE VIDEOS BECAUSE
+        %THAT WOUL PARTIALLY DEFEAT THE PUTPOSE OF ONLINE LOADING
+        %     Cfg.loadStimuliDuringExperiment = 1;
+        %     if Cfg.loadStimuliDuringExperiment
+        %         idxUsedStimuli = unique(trial(i).pageNumber);
+        %             [errorFlag, aStimulus, frameCounter] =...
+        %         ASF_readStimulus(stimNames{iStimulus}, windowPtr, Cfg);
+        %     end
+        
+        %SHOW TRIAL
+        Cfg.currentTrialNumber = i;
+        this_TrialInfo = ASFSHOWTRIAL(trial(i), windowPtr, Stimuli, Cfg);
+        %PREALLOCATE MEMORY FOR TRIALS
+        if i == 1
+            TrialInfo = repmat(this_TrialInfo, [1, Cfg.nTrials]);
+        end
+        %CONSIDER ADDING A CHECK HERE WHETHER ALL FIELDS IN TRIALINFO EXIST
+        %ESPECIALLY PROGRAMMERS OF PLUGIN FNCTIONS MAY FORGET SOMETHING
+        %check_trialinfo(TrialInfo(i));
+        TrialInfo(i) = this_TrialInfo;
+        
+        if Cfg.onlineFeedback
+            %FEEDBACK ON OPERATOR SCREEN
+            fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n', fix(TrialInfo(i).Response.RT), TrialInfo(i).Response.key, trial(i).correctResponse);
+            ASF_onlineFeedback(ExpInfo, trial, TrialInfo, i)
+        else
+            fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n', fix(TrialInfo(i).Response.RT), TrialInfo(i).Response.key, trial(i).correctResponse);
+        end
+        
+        %------------------------------------------------------------------
+        % EYELINK
+        %------------------------------------------------------------------
+        if Cfg.Eyetracking.useEyelink
+            %              if(err~=0)
+            %                 error('checkrecording problem, status: %d', err)
+            %                 break;
+            %             end
+            %el.TRIAL_OK = 0;
+            Cfg.Eyetracking.status = Eyelink('message', 'TRIALEND');
+            
+            %OLDER MATLAB VERSIONS CANNOT HANDLE THIS
+            %[~, ~, keyCode] = KbCheck;
+            [dummy1, dummy2, keyCode] = KbCheck;
+            % if spacebar was pressed stop display
+            if keyCode(Cfg.Eyetracking.stopkey)
+                break;
+            end
+        end
+        %------------------------------------------------------------------
+        
+        %fprintf(1, '\n');
+        
+        %FOR MEMORY DEBUGGING
+        %s = whos;
+        %fprintf(1, '%12d bytes used\n', sum(vertcat(s.bytes)));
+        
+        %out = imaqmem;
+        %mem_left = out.FrameMemoryLimit - out.FrameMemoryUsed
+    end
     
-    %out = imaqmem;
-    %mem_left = out.FrameMemoryLimit - out.FrameMemoryUsed
-end
-
-%     %SYNCHRONIZATION TO MR SCANNER
-%     if Cfg.synchToScanner
-%         for i=1:10
-%             WaitForScannerSynch(windowPtr, Cfg);
-%         end
-%     end
-
-%------------------------------------------------------------------
-%SHUTDOWN PROGRAM
-%------------------------------------------------------------------
-%RELEASE TEXTURES
-Screen('Close', Stimuli.tex);
-
-%CLOSE WINDOWS, FORCE DELETE TEXTURES
-Cfg = ASF_PTBExit(windowPtr, Cfg, 0);
-
-%SAVE DATA
-ExpInfo.Cfg = Cfg;
-ExpInfo.TrialInfo = TrialInfo;
-cmd = sprintf('save %s ExpInfo', expName);
-eval(cmd)
-
-%------------------------------------------------------------------
-% EYELINK
-%------------------------------------------------------------------
-if Cfg.Eyetracking.useEyelink
-    ASF_shutDownEyelink(status, edfFile);
-end
-
-
-%CREATES A SURFACE PLOT THAT SHOWS TIMING DEVIATIONS FOR EACH PAGE IN
-%EACH TRIAL
-if Cfg.enableTimingDiagnosis
-    timing_diagnosis(ExpInfo)
-end
-
-% catch ME
-%     display(ME)
-%     display(ME.message)
-%     %EMERGENCY SAVE DATA
-%     ExpInfo.Cfg = Cfg;
-%     ExpInfo.TrialInfo = TrialInfo;
-%     fprintf('TRYING TO SAVE THE DATA. IT MAY BE INCOMPLETE! ...');
-%     cmd = sprintf('save %s ExpInfo', expName);
-%     eval(cmd)
-%     fprintf(1, 'DONE.\n')
-%     
-%     %     % catch error
-%     Cfg = ASF_PTBExit(windowPtr, Cfg, 1);
-%     
-%     %     PTBCatchError
-% end % try ... catch %
+    %     %SYNCHRONIZATION TO MR SCANNER
+    %     if Cfg.synchToScanner
+    %         for i=1:10
+    %             WaitForScannerSynch(windowPtr, Cfg);
+    %         end
+    %     end
+    
+    %------------------------------------------------------------------
+    %SHUTDOWN PROGRAM
+    %------------------------------------------------------------------
+    %RELEASE TEXTURES
+    Screen('Close', Stimuli.tex);
+    
+    %CLOSE WINDOWS, FORCE DELETE TEXTURES
+    Cfg = ASF_PTBExit(windowPtr, Cfg, 0);
+    
+    %SAVE DATA
+    ExpInfo.Cfg = Cfg;
+    ExpInfo.TrialInfo = TrialInfo;
+    cmd = sprintf('save %s ExpInfo', expName);
+    eval(cmd)
+    
+    %------------------------------------------------------------------
+    % EYELINK
+    %------------------------------------------------------------------
+    if Cfg.Eyetracking.useEyelink
+        ASF_shutDownEyelink(status, edfFile);
+    end
+    
+    
+    %CREATES A SURFACE PLOT THAT SHOWS TIMING DEVIATIONS FOR EACH PAGE IN
+    %EACH TRIAL
+    if Cfg.enableTimingDiagnosis
+        timing_diagnosis(ExpInfo)
+    end
+    
+catch ME
+    display(ME)
+    display(ME.message)
+    %EMERGENCY SAVE DATA
+    ExpInfo.Cfg = Cfg;
+    ExpInfo.TrialInfo = TrialInfo;
+    fprintf('TRYING TO SAVE THE DATA. IT MAY BE INCOMPLETE! ...');
+    cmd = sprintf('save %s ExpInfo', expName);
+    eval(cmd)
+    fprintf(1, 'DONE.\n')
+    
+    %     % catch error
+    Cfg = ASF_PTBExit(windowPtr, Cfg, 1);
+    
+    %     PTBCatchError
+end % try ... catch %
 
 
 
@@ -737,7 +737,7 @@ if errorFlag
     error('PROGRAM ABORTED')
 end
 
-    %GET READY
+%GET READY
 Screen('DrawText', windowPtr, '... press mouse button to begin ...', 50, 545);
 Screen('Flip', windowPtr);
 ASF_waitForMousePressBenign(inf);
@@ -793,7 +793,7 @@ if exist(filename, 'file') == 2
         %trialdef = [];
         error('PTBInit(). USER ABORT: User did not want to overwrite %s.\n', filename)
     else
-         fprintf('User OKed overwriting %s.\n', filename);
+        fprintf('User OKed overwriting %s.\n', filename);
     end
 end
 
@@ -943,13 +943,13 @@ switch Cfg.responseDevice
         %set(recorder, 'StartFcn',  'global s; crsRTSStartStream(s, CRS.SS_IMMEDIATE);');
         %we might consider automatically sending a trigger
         fprintf(1, 'DONE\n');
-    
+        
     case 'VOICEKEYPPA'
         fprintf(1, 'USING PSYCHPORT AUDIO VOICE-KEY AS RESPONSE DEVICE\n');
         % Perform basic initialization of the sound driver, initialize for
         % low-latency, high timing precision mode:
         InitializePsychSound(1);
- 
+        
         %APPLY DEFAULT SETTINGS UNLESS REQUESTED OTHERWISE
         if ~isfield(Cfg, 'audio'), Cfg.audio = []; else end
         if ~isfield(Cfg.audio, 'f'), Cfg.audio.f = 44100; else end
@@ -958,7 +958,7 @@ switch Cfg.responseDevice
         if ~isfield(Cfg.audio, 'outputPath'), Cfg.audio.outputPath = ''; else end
         if ~isfield(Cfg.audio, 'voiceKeyBufferInSecs'), Cfg.audio.voiceKeyBufferInSecs = 3; else end
         fprintf(1, '\tINITIALIZING PSYCHPORTAUDIO FOR VOICE KEY OPERATION...');
-
+        
         % Open the default audio device [], with mode 2 (== Only audio capture),
         % and a required latencyclass of two 2 == low-latency mode, as well as
         % a frequency of 44100 Hz and 2 sound channels for stereo capture. We also
@@ -970,7 +970,7 @@ switch Cfg.responseDevice
         % This returns a handle to the audio device:
         Cfg.audio.pahandle = PsychPortAudio('Open', [], 2, 2, Cfg.audio.f, Cfg.audio.nChannels, [], 0.02);
         PsychPortAudio('GetAudioData', Cfg.audio.pahandle, Cfg.audio.voiceKeyBufferInSecs); %MAKE THE DURATION A PARAMETER
-
+        
         
     case 'LUMINAPARALLEL'
         fprintf(1, 'START INITIALIZING LUMINA ON PARALLEL PORT...\n');
@@ -1133,7 +1133,7 @@ this_response = [];
 %BEFORE THE NEXT VERTICAL BLANK. FOR EXAMPLE IF THE RESPONSE WINDOW IS 1000
 %ms TOLERANCE MAKES THE RESPONSE COLLECTION CODE RETURN AFTER 1000ms-0.3
 %FRAMES, I.E. AFTER 995 ms AT 60Hz
-toleranceSec = Cfg.Screen.monitorFlipInterval*0.3; 
+toleranceSec = Cfg.Screen.monitorFlipInterval*0.3;
 
 %HOWEVER, THIS MUST NOT BE LONGER THAN ONE FRAME
 %DURATION. EXPERIMENTING WITH ONE QUARTER OF A FRAME
@@ -1144,14 +1144,14 @@ this_response.RT = [];
 
 %--------------------------------------------------------------------------
 %TRIAL PRESENTATION HAS SEVERAL PHASES
-% 1) WAIT FOR THE RIGHT TIME TO START TRIAL PRESENTATION. THIS MAY BE 
+% 1) WAIT FOR THE RIGHT TIME TO START TRIAL PRESENTATION. THIS MAY BE
 %    IMMEDIATELY OR USER DEFINED (E.G. IN fMRI EXPERIMENTS)
 %
 % 2) LOOP THROUGH PAGE PRESENTATIONS WITHOUT RESPONSE COLLECTION
 %
 % 3) LOOP THROUGH PAGE PRESENTATIONS WHILE CHECKING FOR USER INPUT/RESPONSES
 %
-% 4) LOOP THROUGH PAGE PRESENTATIONS WITHOUT RESPONSE COLLECTION 
+% 4) LOOP THROUGH PAGE PRESENTATIONS WITHOUT RESPONSE COLLECTION
 %    (AFTER RESPONSE HAS BEEN GIVEN)
 %
 % 5) FEEDBACK
@@ -1232,9 +1232,9 @@ for i = 1:atrial.startRTonPage-1
             StimulusOnsetTime FlipTimestamp Missed Beampos];
         
         
-        %WAIT OUT STIMULUS DURATION IN FRAMES. WE USE PAGE FLIPPING RATHER 
-        %THAN A TIMER WHENEVER POSSIBLE BECAUSE GRAPHICS BOARDS PROVIDE 
-        %EXCELLENT TIMING; THIS IS THE REASON WHY WE MAY WANT TO KEEP A 
+        %WAIT OUT STIMULUS DURATION IN FRAMES. WE USE PAGE FLIPPING RATHER
+        %THAN A TIMER WHENEVER POSSIBLE BECAUSE GRAPHICS BOARDS PROVIDE
+        %EXCELLENT TIMING; THIS IS THE REASON WHY WE MAY WANT TO KEEP A
         %STIMULUS IN THE BACKBUFFER (NONDESTRUCTIVE PAGE FLIPPING)
         %NOT ALL GRAPHICS CARDS CAN DO THIS. FOR CARDS WITHOUT AUXILIARY
         %BACKBUFFERS WE COPY THE TEXTURE EXPLICITLY ON THE BACKBUFFER AFTER
@@ -1245,7 +1245,7 @@ for i = 1:atrial.startRTonPage-1
             %AGAIN AT THE NEXT FLIP
             bPreserveBackBuffer = FlipNumber < nFlips;
             
-            %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT 
+            %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT
             %IN THE BACKBUFFER IN CASE THE SAME IMAGE IS TO BE FLIPPED
             %AGAIN TO THE SCREEN
             ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(i)),...
@@ -1258,7 +1258,7 @@ end
 %--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
-% PHASE 3) LOOP THROUGH PAGE PRESENTATIONS WHILE CHECKING FOR USER 
+% PHASE 3) LOOP THROUGH PAGE PRESENTATIONS WHILE CHECKING FOR USER
 %          INPUT/RESPONSES
 %--------------------------------------------------------------------------
 %SPECIAL TREATMENT FOR THE DISPLAY PAGES ON WHICH WE ALLOW REACTIONS
@@ -1275,7 +1275,7 @@ for i = atrial.startRTonPage:atrial.endRTonPage
         %USING THE TIMER NOT FLIPPING
         bPreserveBackBuffer = 0;
         
-        %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT 
+        %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT
         %IN THE BACKBUFFER IN CASE THE SAME IMAGE IS TO BE FLIPPED
         %AGAIN TO THE SCREEN
         [VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos] =...
@@ -1308,7 +1308,7 @@ for i = atrial.startRTonPage:atrial.endRTonPage
                 %PARTICIPANT HAS PRESSED A BUTTON BEFORE THE TRIAL ENDED
                 %Snd('Play','Quack')
             else
-                %WAIT OUT THE REMAINDER OF THE STIMULUS DURATION WITH 
+                %WAIT OUT THE REMAINDER OF THE STIMULUS DURATION WITH
                 %MARGIN OF toleranceSec
                 wakeupTime = WaitSecs('UntilTime',...
                     StimulusOnsetTime + pageDuration_in_sec - toleranceSec);
@@ -1316,7 +1316,7 @@ for i = atrial.startRTonPage:atrial.endRTonPage
             %FIND WHICH BUTTON IT WAS
             this_response.key = find(buttons);
             %COMPUTE RESPONSE TIME
-            this_response.RT = (t1 - StartRTMeasurement)*1000; 
+            this_response.RT = (t1 - StartRTMeasurement)*1000;
         end
     end
 end
@@ -1340,7 +1340,7 @@ for i = atrial.endRTonPage+1:nPages
         %AGAIN AT THE NEXT FLIP
         bPreserveBackBuffer = atrial.pageDuration(i) > 1;
         
-        %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT 
+        %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT
         %IN THE BACKBUFFER IN CASE THE SAME IMAGE IS TO BE FLIPPED
         %AGAIN TO THE SCREEN
         [VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos] =...
@@ -1362,7 +1362,7 @@ for i = atrial.endRTonPage+1:nPages
             %AGAIN AT THE NEXT FLIP
             bPreserveBackBuffer = FlipNumber < nFlips;
             
-            %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT 
+            %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT
             %IN THE BACKBUFFER IN CASE THE SAME IMAGE IS TO BE FLIPPED
             %AGAIN TO THE SCREEN
             ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(i)),...
@@ -1403,7 +1403,7 @@ end
 %--------------------------------------------------------------------------
 
 
-%PACK INFORMATION ABOUT THIS TRIAL INTO STRUCTURE TrialInfo (THE RETURN 
+%PACK INFORMATION ABOUT THIS TRIAL INTO STRUCTURE TrialInfo (THE RETURN
 %ARGUMENT). PLEASE MAKE SURE THAT TrialInfo CONTAINS THE FIELDS:
 %   trial
 %   datestr
