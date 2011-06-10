@@ -37,7 +37,20 @@ end
 %CHECK IF USER WANTS TO QUIT
 [bUpDn, T, keyCodeKbCheck] = KbCheck;
 if bUpDn % break out of loop
-    if find(keyCodeKbCheck) == 81
+    thisKey = find(keyCodeKbCheck);
+%     switch Cfg.Environment.computer.windows
+%         case 0
+%             %NONWINDOWS
+%             if thisKey == 20
+%                 bAbort = 1;
+%             end
+%         case 1
+%             %WINDOWS
+%             if thisKey == 81
+%                 bAbort = 1;
+%             end
+%     end
+    if ismember(find(keyCodeKbCheck), [20, 81])
         fprintf(1, 'USER ABORTED PROGRAM\n');
         ASF_PTBExit(windowPtr, Cfg, 1)
         %FORCE AN ERROR
