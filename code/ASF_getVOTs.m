@@ -67,7 +67,7 @@ for i = 1:nFiles
         %     end
         
         ey = sqrt(y.^2);
-        bl = mean(ey(1:max(find((t-t(1))<0.2))));
+        bl = mean(ey(1:max(find((t-t(1))<0.3)))); %300ms BASELINE
         
         
         
@@ -107,18 +107,28 @@ for i = 1:nFiles
         
         figure(fig)
         set(fig, 'name', sprintf('FILE: %s, RT = %5.3f', fname, rt(i)))
+        subplot(2,1,1)
         plot_wav(t, eyf);
         ylabel('sqrt(y^2)')
         hold on
-        tbl = t(find(t<0.2));
+        tbl = t(find(t<0.3));
         plot([tbl(1), tbl(end)], [bl, bl], 'Color', [.6 .6 .6], 'LineWidth', 3)
         plot([t(1), t(end)], [bl+current_thresh, bl+current_thresh], ':', 'Color', [.6 .6 .6], 'LineWidth', 3)
         ylim = get(gca, 'ylim');
         plot([rt(i), rt(i)], ylim, 'r', 'LineWidth', 3)
         hold off
+        subplot(2,1,2)
+        plot_wav(t, y);
+        hold on
+        ylim = get(gca, 'ylim');
+        plot([rt(i), rt(i)], ylim, 'r', 'LineWidth', 3)
+        hold off
+
         drawnow
+        pause
         if Cfg.playWav
-            wavplay(y, fs)
+            wavplay(y(first_sample:end), fs)
+            % wavplay(filtfilt(ones(1,10), 10, y), fs)
         end
         
         
