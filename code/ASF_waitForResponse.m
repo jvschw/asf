@@ -8,10 +8,11 @@
 %KEYBOARD 
 %20071024 JS FIXED BUG THAT NOT PRESSING A RESPONSE BTTEN COULD LEAD TO PROGRAM STOP
 %20081126 JS FIXED BUG THAT RT WAS NOT RECORDED USING THE LUMINA BOX
-function [x, y, buttons, t0, t1] = ASF_waitForResponse(Cfg, timeout)
+function [x, y, buttons, t0, t1, extraKey] = ASF_waitForResponse(Cfg, timeout)
+extraKey = NaN;
 switch Cfg.responseDevice
     case 'MOUSE'
-        [x, y, buttons, t0, t1] = WaitForMousePress(timeout);
+        [x, y, buttons, t0, t1, extraKey] = WaitForMousePress(timeout, Cfg.responseSettings.allowTrialRepeat); %NEW 2nd arg
         
     case 'LUMINAPARALLEL'
         [x, y, buttons, t0, t1] = WaitForLuminaPress(Cfg.hardware.parallel.mydio_in, timeout);
@@ -361,14 +362,22 @@ end
 %               THE PRESSED BUTTON(S) HAS/HAVE A 1
 %   T0, T1:     TIME WHEN THE FUNCTION IS ENTERED AND LEFT
 %**************************************************************************
-function [x, y, buttons, t0, t1] = WaitForMousePress(timeout)
+function [x, y, buttons, t0, t1, extraKey] = WaitForMousePress(timeout, allowTrialRepeat)
 buttons = 0;
 t0 = GetSecs;
 t1 = t0;
 x = NaN; y = NaN;
+keyIsDown = 0;
+keyCode = NaN;
+extraKey = NaN;
 
-while (~any(buttons) && (t1 - t0)<timeout) % wait for press
+while (~any(buttons) && ((t1 - t0)<timeout) &&(~keyIsDown)) % wait for press
     [x, y, buttons] = GetMouse;
+    %BETA: WE ALSO ALLOW PARTICIPANTS TO PRESS A KEY ON THE KEYBOARD
+    %HERE SPACEBAR, WHICH WILL LEAD TO A TRIAL REPETITION
+    if allowTrialRepeat
+         [keyIsDown, secs, keyCode] = KbCheck;
+    end
     t1 = GetSecs;
     % Wait 1 ms before checking the mouse again to prevent
     % overload of the machine at elevated Priority()
@@ -376,7 +385,25 @@ while (~any(buttons) && (t1 - t0)<timeout) % wait for press
     %AND MAY PRODUCE FRAME DROPS
     %WaitSecs(0.001);
 end
-
+if keyIsDown
+    extraKey = keyCode;
+end
+% 
+% function [x, y, buttons, t0, t1] = WaitForMousePress(timeout)
+% buttons = 0;
+% t0 = GetSecs;
+% t1 = t0;
+% x = NaN; y = NaN;
+% 
+% while (~any(buttons) && (t1 - t0)<timeout) % wait for press
+%     [x, y, buttons] = GetMouse;
+%     t1 = GetSecs;
+%     % Wait 1 ms before checking the mouse again to prevent
+%     % overload of the machine at elevated Priority()
+%     %JS: I REMOVED THIS BECAUSE IT SEEMS TO INVITE FOR GARBAGE COLLECTION
+%     %AND MAY PRODUCE FRAME DROPS
+%     %WaitSecs(0.001);
+% end
 
 %% WaitForLuminaPress
 %LUMINA RESPONSE BOX
