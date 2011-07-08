@@ -248,6 +248,8 @@ if ~isfield(Cfg, 'feedbackTrialError'), Cfg.feedbackTrialError = 0; else Cfg.snd
 if ~isfield(Cfg, 'onlineFeedback'), Cfg.onlineFeedback = 0; else end; %[{0}|1]
 if ~isfield(Cfg, 'writeVideo'), Cfg.writeVideo = 0; else end;
 if ~isfield(Cfg, 'videoIndexStepSize'), Cfg.videoIndexStepSize = 1; else end; %FOR READING AVIs (e.g. 1: read all frames; 3: read every third frame)
+if ~isfield(Cfg, 'responseSettings'), Cfg.responseSettings.allowTrialRepeat = 0; else end
+
 %NOT SURE WETHER THIS WILL STAY
 if ~isfield(Cfg, 'task'), Cfg.task = 'default'; else end; %ALTERNATIVES: [ {'DEFAULT'}, 'AUDITORYODDBALL' ]
 
