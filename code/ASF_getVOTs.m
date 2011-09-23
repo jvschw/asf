@@ -16,7 +16,7 @@ function rt = ASF_getVOTs(Cfg)
 if(~isfield(Cfg, 'thresh')), Cfg.thresh = 0.2; end
 if(~isfield(Cfg, 'fnames')), Cfg.fnames = '*.wav'; end
 if(~isfield(Cfg, 'verbose')), Cfg.verbose = 0; end
-if(~isfield(Cfg, 'ShowRTAnalysis')), Cfg.ShowRTAnalysis = 0; end
+if(~isfield(Cfg, 'ShowRTAnalysis')), Cfg.ShowRTAnalysis = 1; end
 if(~isfield(Cfg, 'playWav')), Cfg.playWav = 0; end
 fig = figure;
 dataDir = fileparts(Cfg.fnames);
@@ -36,7 +36,7 @@ for i = 1:nFiles
     end
     fname = d(i).name;
     %    [y, fs, nbits, opts] =   wavread(fname, [22050, 88000]);
-    [y, fs, nbits, opts] =   wavread(fullfile(dataDir, fname));
+    [y, fs, nbits, opts] = wavread(fullfile(dataDir, fname));
     
     %TREATMENT FOR STEREODATA: AVERAGE CHANNELS
     if opts.fmt.nChannels == 2
@@ -55,6 +55,13 @@ for i = 1:nFiles
     %         set(gcf, 'Name', 'Original Signal')
     %     end
     
+%     yorg = y;
+%     figure
+%     subplot(2,1,1)
+%     [spec_s, spec_f, spec_t, spec_p]= spectrogram(yorg, 512, [], [], fs/1000 , 'yaxis')
+%     subplot(2,1,2)
+%     plot(t, yorg)
+    
     %NORMALIZE
     y = y - mean(y);
     if max(abs(y) > Cfg.thresh)
@@ -72,7 +79,7 @@ for i = 1:nFiles
         
         
         %FILTER OUT LIP-CLICKS
-        Cfg.FilterLengthInSamples = 100;
+        Cfg.FilterLengthInSamples = 500;
         b = ones(Cfg.FilterLengthInSamples, 1)/Cfg.FilterLengthInSamples;  % Cfg.FilterLengthInSamples point averaging filter
         eyf = filtfilt(b, 1, ey); % Noncausal filtering; smothes data without delay
         
@@ -98,20 +105,24 @@ for i = 1:nFiles
         %         end
         %
         %     end
-        first_sample = min(find(eyf-bl >current_thresh));
+        samplesAboveThresh = find(eyf-bl > current_thresh);
+        first_sample = samplesAboveThresh(min(find(t(samplesAboveThresh) > 0.4)));%RT MUST BE LONGER THAN 400ms
+        %first_sample = min(find(eyf-bl > current_thresh));
         if isempty(first_sample)
             rt(i) = NaN;
         else
             rt(i) = t(first_sample);
         end
-        
+        if rt(i) > 1.75
+            rt(i) = NaN;
+        end
         figure(fig)
         set(fig, 'name', sprintf('FILE: %s, RT = %5.3f', fname, rt(i)))
         subplot(2,1,1)
         plot_wav(t, eyf);
         ylabel('sqrt(y^2)')
         hold on
-        tbl = t(find(t<0.3));
+        tbl = t(find(t<0.3));%BASELINE PERIOD
         plot([tbl(1), tbl(end)], [bl, bl], 'Color', [.6 .6 .6], 'LineWidth', 3)
         plot([t(1), t(end)], [bl+current_thresh, bl+current_thresh], ':', 'Color', [.6 .6 .6], 'LineWidth', 3)
         ylim = get(gca, 'ylim');
@@ -125,7 +136,8 @@ for i = 1:nFiles
         hold off
 
         drawnow
-        pause
+%         wavplay(y(first_sample:end), fs)
+%         pause
         if Cfg.playWav
             wavplay(y(first_sample:end), fs)
             % wavplay(filtfilt(ones(1,10), 10, y), fs)
