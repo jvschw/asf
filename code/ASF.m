@@ -207,7 +207,18 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %DEFAULT CONFIGURATION
 Cfg.ASFVersion = 0.48;
 %BETA FEATURES
-if ~isfield(Cfg, 'instructionTrial'), Cfg.instructionTrial = []; else end
+%INSTRUCTION TRIALS
+if ~isfield(Cfg, 'Instruction'), Cfg.Instruction = []; else end
+if ~isfield(Cfg.Instruction, 'instructionTrial'), Cfg.Instruction.instructionTrial = []; else end
+if ~isfield(Cfg.Instruction, 'showInstruction'), Cfg.Instruction.showInstruction = 0; else end
+if ~isfield(Cfg.Instruction, 'instructionSlide'), Cfg.Instruction.instructionSlide = NaN; else end
+
+%BETA FEATURE: FIXATION CROSS PROPERTIES
+if ~isfield(Cfg, 'Fixation'), Cfg.Fixation = []; else end;
+if ~isfield(Cfg.Fixation, 'fixType'), Cfg.Fixation.fixType = 1; else end; %1 square, 2 dot (1 is safer for certain graphics cards)
+if ~isfield(Cfg.Fixation, 'offsetX'), Cfg.Fixation.offsetX = 0; else end;
+if ~isfield(Cfg.Fixation, 'offsetY'), Cfg.Fixation.offsetY = 0; else end;
+
 
 %SCREEN SETTINGS
 if ~isfield(Cfg, 'Screen'), Cfg.Screen = []; else end;
@@ -216,11 +227,19 @@ if ~isfield(Cfg.Screen, 'rect'), Cfg.Screen.rect = []; else end; %Cfg.Screen.rec
 if ~isfield(Cfg.Screen, 'color'), Cfg.Screen.color = [255, 255, 255]; else end;% [{[255, 255, 255]}|[R, G, B]]
 if ~isfield(Cfg.Screen, 'fontSize'), Cfg.Screen.fontSize = 24; end;
 if ~isfield(Cfg.Screen, 'fontName'), Cfg.Screen.fontName = 'Arial'; end; %'Courier New'
+%BETA FEATURE: OFFSETS
+%PICTURES CAN BE SHIFTED WITHIN A SCREEN
+%NEED TO INCORPORATE THIS
+%Cfg.destinationRect = CenterRectOnPoint([1, 1, 256, 256], Cfg.Screen.Resolution.width/2 + Cfg.fixOffsetX, Cfg.Screen.Resolution.height/2 + Cfg.fixOffsetY);
+if ~isfield(Cfg.Screen, 'withinOffsetX'), Cfg.Screen.withinOffsetX = 0; else end;
+if ~isfield(Cfg.Screen, 'withinOffsetY'), Cfg.Screen.withinOffsetY = 0; else end;
+
 %SHOULD BE CALLED Cfg.Screen.useBackBuffer
 if ~isfield(Cfg, 'useBackBuffer')
     Cfg.Screen.useBackBuffer = 1;
 else
     fprintf(1, 'WARNING Cfg.useBackBuffer should be called Cfg.Screen.useBackBuffer\n');
+    Cfg.Screen.useBackBuffer = Cfg.useBackBuffer;
     Cfg = rmfield(Cfg, 'useBackBuffer');
 end
 if ~isfield(Cfg.Screen, 'useBackBuffer'), Cfg.Screen.useBackBuffer = 1; else end;
@@ -229,8 +248,6 @@ if ~isfield(Cfg.Screen, 'useBackBuffer'), Cfg.Screen.useBackBuffer = 1; else end
 if ~isfield(Cfg, 'Sound'), Cfg.Sound= []; else end;
 if ~isfield(Cfg.Sound, 'soundMethod'), Cfg.Sound.soundMethod = 'none'; else end; %[{'none'}|'psychportaudio'|'audioplayer'|'wavplay'|'snd']
 
-if ~isfield(Cfg, 'Instruction'), Cfg.Instruction.showInstruction = 0; else end
-if ~isfield(Cfg.Instruction, 'instructionSlide'), Cfg.Instruction.instructionSlide = NaN; else end
 %TRIAL EXECUTION SETTINGS USED IN SHOWTRIAL AND POSSIBLY USED IN USER
 %DEFINED TRIAL FUNCTION
 if ~isfield(Cfg, 'userSuppliedTrialFunction'), Cfg.userSuppliedTrialFunction = []; else end;
@@ -246,8 +263,10 @@ if ~isfield(Cfg, 'useTrialOnsetTimes'), Cfg.useTrialOnsetTimes = 0; else end;
 if ~isfield(Cfg, 'feedbackTrialCorrect'), Cfg.feedbackTrialCorrect = 0; else Cfg.sndOK = MakeBeep(1000, 0.1);end;
 if ~isfield(Cfg, 'feedbackTrialError'), Cfg.feedbackTrialError = 0; else Cfg.sndERR = MakeBeep(500, 0.1);end;
 if ~isfield(Cfg, 'onlineFeedback'), Cfg.onlineFeedback = 0; else end; %[{0}|1]
-if ~isfield(Cfg, 'writeVideo'), Cfg.writeVideo = 0; else end;
-if ~isfield(Cfg, 'videoIndexStepSize'), Cfg.videoIndexStepSize = 1; else end; %FOR READING AVIs (e.g. 1: read all frames; 3: read every third frame)
+if ~isfield(Cfg, 'video'), Cfg.video.writeVideo = 0; else end
+if ~isfield(Cfg.video, 'writeVideo'), Cfg.video.writeVideo = 0; else end;
+if ~isfield(Cfg.video, 'videoIndexStepSize'), Cfg.video.videoIndexStepSize = 1; else end; %FOR READING AVIs (e.g. 1: read all frames; 3: read every third frame)
+if ~isfield(Cfg.video, 'saveCurrentFrame'), Cfg.video.saveCurrentFrame = 0; else end;
 if ~isfield(Cfg, 'responseSettings'), Cfg.responseSettings.allowTrialRepeat = 0; else end
 if ~isfield(Cfg.responseSettings, 'allowTrialRepeat'), Cfg.responseSettings.allowTrialRepeat = 0; else end
 
@@ -372,8 +391,8 @@ try
     %INSTRUCTION TRIAL (BETA STADIUM)
     %--------------------------------------------------------------------------
     if Cfg.Instruction.showInstruction
-        if ~isempty(Cfg.instructionTrial)
-            INSTRUCTTRIAL = Cfg.instructionTrial;
+        if ~isempty(Cfg.Instruction.instructionTrial)
+            INSTRUCTTRIAL = Cfg.Instruction.instructionTrial;
             INSTRUCTTRIAL(windowPtr, Cfg, Stimuli);
         end
     end
@@ -727,6 +746,11 @@ end
 %CHECK IF ANY PAGENUMBER IN TRIALDEFS EXCEEDS THE HIGHES POSSIBLE FRAME
 %NUMBER
 for iTrial = 1:length(trial)
+    if isempty(trial(iTrial).pageNumber)
+        fprintf('Error. Trial %3d contains no reference to any page. Check your trd.\n', iTrial);
+        display(trial(iTrial))
+        errorFlag = 1;
+    end
     if any(trial(iTrial).pageNumber > Cfg.frameCounter)
         fprintf('Error. Trial %3d contains a reference to a non-existing stimulus (pageNumber). Max is %d.\n', iTrial, Cfg.frameCounter);
         fprintf(1, 'pageNumber = [ ')

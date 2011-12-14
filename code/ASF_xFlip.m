@@ -24,14 +24,18 @@ switch bPreserveBackBuffer
 end
 
 
-if Cfg.writeVideo
+if Cfg.video.writeVideo
     if isempty(frameCounter)
         frameCounter = 0;
     end
-    frameCounter = frameCounter + 1;
-    imageArray = Screen('GetImage', windowPtr );
-    VideoName = sprintf('frame%06d.bmp', frameCounter);
-    imwrite(imageArray, VideoName, 'BMP')
+    if Cfg.video.saveCurrentFrame 
+        %YOU CAN CHANGE THIS FLAG IN YOUR RENDERING CODE IN ORDER TO ONLY
+        %SAVE FRAMES OF INTEREST
+        frameCounter = frameCounter + 1;
+        imageArray = Screen('GetImage', windowPtr );
+        VideoName = sprintf('frame%06d.bmp', frameCounter);
+        imwrite(imageArray, VideoName, 'BMP')
+    end
 end
 
 %CHECK IF USER WANTS TO QUIT
