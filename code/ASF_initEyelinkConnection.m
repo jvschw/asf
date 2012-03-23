@@ -13,7 +13,8 @@ function [edfFile, el, status, stopkey, startkey, eye_used] = ASF_initEyelinkCon
 % Initialize 'el' eyelink struct with proper defaults for output to
 % window 'w':
 
-el=ASF_EyelinkInitDefaults(windowPtr);
+%el=ASF_EyelinkInitDefaults(windowPtr);
+el = EyelinkInitDefaults(windowPtr);
 
 if ~EyelinkInit([], 1)
     fprintf('Eyelink Init aborted.\n');
