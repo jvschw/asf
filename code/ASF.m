@@ -43,6 +43,8 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 % Cfg.ScannerSynchShowDefaultMessage    = [0|{1}]
 % Cfg.scannerSynchTimeOutMs             = {inf} %BY DEFAULT WAIT FOREVER
 % Cfg.serialPortName                    = [ {'COM1'}, ... 'COMn' ]
+%%EXPERIMENTAL
+% Cfg.Trigger.triggerType               = [{'pulse'}, 'state', 'train']; %THIS IS NOT YET FULLY IMPLEMENTED ON ALL PORTS
 %
 %TIMING
 %Cfg.useTrialOnsetTimes                 = [ {0} | 1 ] %THIRD COLUMN IN TRIAL-DEFINITION FILE DETERMINES WHEN TRIAL IS STARTED WR TO START OF EXPT
@@ -205,7 +207,7 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %% ***ASF-MAIN LOOP***
 
 %DEFAULT CONFIGURATION
-Cfg.ASFVersion = 0.48;
+Cfg.ASFVersion = 0.49;
 %BETA FEATURES
 %INSTRUCTION TRIALS
 if ~isfield(Cfg, 'Instruction'), Cfg.Instruction = []; else end
@@ -285,7 +287,8 @@ if ~isfield(Cfg.hardware.Arduino, 'useArduino'), Cfg.hardware.Arduino.useArduino
 if ~isfield(Cfg.hardware.Arduino, 'comPort'), Cfg.hardware.Arduino.comPort = []; else end;
 if ~isfield(Cfg.hardware.Arduino.comPort, 'port'), Cfg.hardware.Arduino.comPort.port = 'COM4'; else end;
 if ~isfield(Cfg.hardware.Arduino.comPort, 'baudRate'), Cfg.hardware.Arduino.comPort.baudRate = 9600; else end;
-
+if ~isfield(Cfg, 'Trigger'), Cfg.Trigger = []; else end;
+if ~isfield(Cfg.Trigger, 'triggerType'), Cfg.Trigger.triggerType = 'pulse'; else end;
 
 %RESPONSE DEVICE SETTINGS
 if ~isfield(Cfg, 'responseDevice'), Cfg.responseDevice = 'MOUSE'; else end; %[ {'MOUSE'}|'VOICEKEY'|'LUMINAPARALLEL'|'SERIAL'|'KEYBOARD' ]
