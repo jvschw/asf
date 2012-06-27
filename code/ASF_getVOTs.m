@@ -12,6 +12,7 @@ function rt = ASF_getVOTs(Cfg)
 %Cfg.ShowRTAnalysis = 0;
 %Cfg.playWav = 0;
 %rt = ASF_getVOTs(Cfg)
+global editX
 
 if(~isfield(Cfg, 'thresh')), Cfg.thresh = 0.2; end
 if(~isfield(Cfg, 'fnames')), Cfg.fnames = '*.wav'; end
@@ -55,12 +56,12 @@ for i = 1:nFiles
     %         set(gcf, 'Name', 'Original Signal')
     %     end
     
-%     yorg = y;
-%     figure
-%     subplot(2,1,1)
-%     [spec_s, spec_f, spec_t, spec_p]= spectrogram(yorg, 512, [], [], fs/1000 , 'yaxis')
-%     subplot(2,1,2)
-%     plot(t, yorg)
+    %     yorg = y;
+    %     figure
+    %     subplot(2,1,1)
+    %     [spec_s, spec_f, spec_t, spec_p]= spectrogram(yorg, 512, [], [], fs/1000 , 'yaxis')
+    %     subplot(2,1,2)
+    %     plot(t, yorg)
     
     %NORMALIZE
     y = y - mean(y);
@@ -113,31 +114,64 @@ for i = 1:nFiles
         else
             rt(i) = t(first_sample);
         end
-        if rt(i) > 1.75
-            rt(i) = NaN;
+%         if rt(i) > 1.75
+%             rt(i) = NaN;
+%         end
+        if isnan(rt(i))
+            rt(i) = 0.75;
+            fprintf(1, 'ARBITRARY RT\n');
         end
-        figure(fig)
-        set(fig, 'name', sprintf('FILE: %s, RT = %5.3f', fname, rt(i)))
-        subplot(2,1,1)
-        plot_wav(t, eyf);
-        ylabel('sqrt(y^2)')
-        hold on
-        tbl = t(find(t<0.3));%BASELINE PERIOD
-        plot([tbl(1), tbl(end)], [bl, bl], 'Color', [.6 .6 .6], 'LineWidth', 3)
-        plot([t(1), t(end)], [bl+current_thresh, bl+current_thresh], ':', 'Color', [.6 .6 .6], 'LineWidth', 3)
-        ylim = get(gca, 'ylim');
-        plot([rt(i), rt(i)], ylim, 'r', 'LineWidth', 3)
-        hold off
-        subplot(2,1,2)
-        plot_wav(t, y);
-        hold on
-        ylim = get(gca, 'ylim');
-        plot([rt(i), rt(i)], ylim, 'r', 'LineWidth', 3)
-        hold off
-
+        previouslySuggestedRT = Cfg.ExpInfo.TrialInfo(i).Response.RT;
+        rt(i) = plotAndEdit(fig, fname, rt(i), previouslySuggestedRT, t, eyf, bl, current_thresh, y, fs);
+        %         figure(fig)
+        %         set(fig, 'name', sprintf('FILE: %s, RT = %5.3f', fname, rt(i)))
+        %         subplot(2,1,1)
+        %         plot_wav(t, eyf);
+        %         ylabel('sqrt(y^2)')
+        %         hold on
+        %         tbl = t(find(t<0.3));%BASELINE PERIOD
+        %         plot([tbl(1), tbl(end)], [bl, bl], 'Color', [.6 .6 .6], 'LineWidth', 3)
+        %         plot([t(1), t(end)], [bl+current_thresh, bl+current_thresh], ':', 'Color', [.6 .6 .6], 'LineWidth', 3)
+        %         aH = gca;
+        %         ylim = get(gca, 'ylim');
+        %         phVOT = plot([rt(i), rt(i)], ylim, 'r', 'LineWidth', 3);
+        %         hold off
+        %         subplot(2,1,2)
+        %         plot_wav(t, y);
+        %         hold on
+        %         ylim = get(gca, 'ylim');
+        %         plot([rt(i), rt(i)], ylim, 'r', 'LineWidth', 3)
+        %         hold off
+        %
+        %         function startDragFcn(varargin)
+        %         set(fig, 'WindowButtonMotionFcn', @draggingFcn)
+        %         end
+        %
+        %         function draggingFcn(varargin)
+        %         pt = get(aH, 'CurrentPoint');
+        %         set(phVOT, 'XData', pt(1)*[1 1]);
+        %         end
+        %
+        %         function stopDragFcn(varargin)
+        %         set(fig, 'WindowButtonMotionFcn', '');
+        %         end
+        
+        %         pbh1 = uicontrol(gcf,'Style','pushbutton','String','Play',...
+        %             'Units','normalized',...
+        %             'Position',[.0 0 .2 .075]);
+        %         pbh2 = uicontrol(gcf,'Style','pushbutton','String','Edit',...
+        %             'Units','normalized',...
+        %             'Position',[.2 0 .2 .075]);
+        %         pbh3 = uicontrol(gcf,'Style','pushbutton','String','OK',...
+        %             'Units','normalized',...
+        %             'Position',[.8 0 .2 .075]);
+        %         set(phVOT, 'ButtonDownFcn', @startDragFunction)
+        %         set(gcf, 'WindowButtonUpFcn', @stopDragFunction)
+        
         drawnow
-%         wavplay(y(first_sample:end), fs)
-%         pause
+        %keyboard
+        %         wavplay(y(first_sample:end), fs)
+        %         pause
         if Cfg.playWav
             wavplay(y(first_sample:end), fs)
             % wavplay(filtfilt(ones(1,10), 10, y), fs)
@@ -187,8 +221,64 @@ if Cfg.verbose
     plot(sort(rt), 'k.')
 end
 
+
 function ph = plot_wav(t, y)
 set(gcf, 'DefaultAxesFontSize', 16)
 ph = plot(t, y, 'k', 'LineWidth', 2);
 xlabel('Time [s]')
 ylabel('Signal')
+
+
+function  newRT = plotAndEdit(fig, fname, thisRT, previouslySuggestedRT, t, eyf, bl, current_thresh, y, fs)
+global editX glob_t glob_y glob_fs
+
+glob_y = y;
+glob_fs = fs;
+glob_t = t;
+figure(fig)
+set(fig, 'name', sprintf('FILE: %s, RT = %5.3f', fname, thisRT))
+subplot(2,1,1)
+plot_wav(t, eyf);
+ylabel('sqrt(y^2)')
+hold on
+tbl = t(find(t<0.3));%BASELINE PERIOD
+plot([tbl(1), tbl(end)], [bl, bl], 'Color', [.6 .6 .6], 'LineWidth', 3)
+plot([t(1), t(end)], [bl+current_thresh, bl+current_thresh], ':', 'Color', [.6 .6 .6], 'LineWidth', 3)
+aH = gca;
+ylim = get(gca, 'ylim');
+phprevSug = plot([previouslySuggestedRT, previouslySuggestedRT], ylim, 'y', 'LineWidth', 6);
+
+phVOT = plot([thisRT, thisRT], ylim, 'r', 'LineWidth', 3);
+hold off
+subplot(2,1,2)
+plot_wav(t, y);
+hold on
+ylim = get(gca, 'ylim');
+editX = thisRT;
+plot([thisRT, thisRT], ylim, 'r', 'LineWidth', 3, 'ButtonDownFcn', @startDragFcn, 'tag', 'myVOTline')
+hold off
+set(gcf, 'WindowButtonUpFcn', @stopDragFcn);
+idxStart = min(find(t>thisRT));
+drawnow
+wavplay(y(idxStart:end), fs)
+
+waitfor(gcf)
+editX
+newRT = editX;
+
+function startDragFcn(varargin)
+set(gcf, 'WindowButtonMotionFcn', @draggingFcn)
+
+function draggingFcn(varargin)
+global editX
+pt = get(gca, 'CurrentPoint');
+hMyline = findobj('tag', 'myVOTline');
+set(hMyline, 'XData', pt(1)*[1 1]);
+editX = pt(1);
+
+
+function stopDragFcn(varargin)
+global editX glob_t glob_y glob_fs
+set(gcf, 'WindowButtonMotionFcn', '');
+idxStart = min(find(glob_t > editX));
+wavplay(glob_y(idxStart:end), glob_fs)
