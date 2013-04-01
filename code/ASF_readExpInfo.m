@@ -31,11 +31,11 @@ else
             res(i, 2) = NaN;
             res(i, 3) = NaN;
         else
-            res(i, 2) = thisResponse.RT;
+            res(i, 2) = thisResponse.RT(1); %MULTIPLE RESPONSES NEED SPECIAL TREATMENT JVS20130329
             if isempty(thisResponse.key)
                 res(i, 3) = NaN;
             else
-                res(i, 3) = thisResponse.key(1); %IF YOU WNAT MULTIPLE KEYS MAKE IT A CELL
+                res(i, 3) = thisResponse.key(1); %IF YOU WANT MULTIPLE KEYS MAKE IT A CELL
             end
         end
         res(i, 4) = expinfo.TrialInfo(i).trial.correctResponse; %REQUESTED RESPONSE

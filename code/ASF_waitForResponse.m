@@ -1,4 +1,4 @@
-%function [x, y, buttons, t0, t1] = ASF_waitForResponse(Cfg, timeout)
+%function [x, y, buttons, t0, t1, buttonStateChanged] = ASF_waitForResponse(Cfg, timeout)
 %% ***RESPONSE COLLECTION***
 %% WaitForResponse Wrapper
 %WRAPPER FUNCTION THAT CHECKS FOR A RESPONSE USING:
@@ -6,21 +6,35 @@
 %LUMINA
 %CRS RESPONSE BOX - NOT YET IMPLEMENTED
 %KEYBOARD 
-%20071024 JS FIXED BUG THAT NOT PRESSING A RESPONSE BTTEN COULD LEAD TO PROGRAM STOP
+%20071024 JS FIXED BUG THAT NOT PRESSING A RESPONSE BUTTON COULD LEAD TO PROGRAM STOP
 %20081126 JS FIXED BUG THAT RT WAS NOT RECORDED USING THE LUMINA BOX
-function [x, y, buttons, t0, t1, extraKey] = ASF_waitForResponse(Cfg, timeout)
+function [x, y, buttons, t0, t1, extraKey, buttonStateChanged] = ASF_waitForResponse(Cfg, timeout)
+if~isfield(Cfg, 'responseType'), Cfg.responseType = 'buttonDown'; else end;
+buttonStateChanged = NaN;
 extraKey = NaN;
 switch Cfg.responseDevice
     case 'MOUSE'
-        [x, y, buttons, t0, t1, extraKey] = WaitForMousePress(timeout, Cfg.responseSettings.allowTrialRepeat); %NEW 2nd arg
+        switch Cfg.responseType
+            case 'buttonDown'
+                [x, y, buttons, t0, t1, extraKey, buttonStateChanged] = WaitForMousePress(timeout, Cfg.responseSettings.allowTrialRepeat); %NEW 2nd arg
+            otherwise
+                error(sprintf('MOUSE Unknown response type %s', Cfg.responseType));
+        end
         
     case 'LUMINAPARALLEL'
         [x, y, buttons, t0, t1] = WaitForLuminaPress(Cfg.hardware.parallel.mydio_in, timeout);
 
-    case 'LUMINASERIAL'
+    case {'LUMINASERIAL', 'ARDUINOSERIAL'}
         x = [];
         y = [];
-        [buttons, t0, t1] = WaitForSerialBoxPress(Cfg, timeout);
+        switch Cfg.responseType
+            case 'buttonDown'
+                [buttons, t0, t1] = WaitForSerialBoxPress(Cfg, timeout);
+            case 'buttonUp'
+                [buttons, t0, t1] = WaitForSerialBoxButtonUp(Cfg, timeout);
+            otherwise
+                error(sprintf('LUMINASERIAL Unknown response type %s', Cfg.responseType));
+        end
 
     case 'KEYBOARD'
         x = [];
@@ -351,7 +365,53 @@ while ((t1 - t0) < timeout) % wait for press
     t1 = GetSecs;
 end
 
+function [buttons, t0, t1] = WaitForSerialButtonUp(Cfg, timeout)
+buttons(4) = 0;
+t0 = GetSecs;
+t1 = t0;
+return
+% while ((~Cfg.hardware.serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
+%     buttons = fgets(Cfg.hardware.serial.oSerial);
+%     
+%     t1 = GetSecs;
+% end
 
+while ((t1 - t0) < timeout) % wait for press
+    if Cfg.hardware.serial.oSerial.BytesAvailable
+        
+        sbuttons = str2num(fscanf(Cfg.hardware.serial.oSerial)); %#ok<ST2NM>
+        
+        %IF ONLY A SINGLE BUTTON HAS BEEN PRESSED, sbuttons WILL BE BETWEEN
+        %1 AND 4, IF SEVERAL BUTTONS HAVE BEEN PRESSED, E.G. 1 AND 4 THE
+        %RESULTING NUMBER WILL BE HIGHER THAN TEN (12, 13, 14, 23, 24, 34, 123, 234)
+        %IT MAY EVEN OCCUR THAT A BUTTON HAS BEEN PRESSED SIMULTANEOUSLY
+        %WITH A SYNCH PULSE
+        switch sbuttons
+            case {1, 2, 3, 4}
+                %TRANSFORM INTO A 4 ELEMENT VECTOR
+                buttons(sbuttons) = 1;
+                t1 = GetSecs;
+                break; %THIS INTENTIONALLY BREAKS OUT OF THE ENTIRE WHILE LOOP!
+
+            case {15, 25, 35, 45}
+                sbuttons = (sbuttons - 5)/10;
+                %TRANSFORM INTO A 4 ELEMENT VECTOR
+                buttons(sbuttons) = 1;
+                t1 = GetSecs;
+                break; %THIS INTENTIONALLY BREAKS OUT OF THE ENTIRE WHILE LOOP!
+            case 5
+                %JUST A SYNCH
+        end
+
+%         %CLEAN UP IN CASE MONKEY GOES WILD
+%         while Cfg.hardware.serial.oSerial.BytesAvailable
+%             junk = fscanf(Cfg.hardware.serial.oSerial);
+%         end
+        
+    end
+    %T1 WILL EQUAL TIMEOUT IF NO BUTTON HAS BEEN PRESSED WITIN TIMEOUT
+    t1 = GetSecs;
+end
 %% WaitForMousePress
 %**************************************************************************
 %WAIT FOR MOUSE BUTTON PRESS UNTIL TIMEOUT HAS BEEN REACHED OR A BUTTON
@@ -362,7 +422,7 @@ end
 %               THE PRESSED BUTTON(S) HAS/HAVE A 1
 %   T0, T1:     TIME WHEN THE FUNCTION IS ENTERED AND LEFT
 %**************************************************************************
-function [x, y, buttons, t0, t1, extraKey] = WaitForMousePress(timeout, allowTrialRepeat)
+function [x, y, buttons, t0, t1, extraKey, buttonStateChanged] = WaitForMousePress(timeout, allowTrialRepeat)
 buttons = 0;
 t0 = GetSecs;
 t1 = t0;
@@ -370,9 +430,17 @@ x = NaN; y = NaN;
 keyIsDown = 0;
 keyCode = NaN;
 extraKey = NaN;
+persistent oldButtons;
 
+if isempty(oldButtons)
+     oldButtons = [0, 0, 0];
+end
 while (~any(buttons) && ((t1 - t0)<timeout) &&(~keyIsDown)) % wait for press
     [x, y, buttons] = GetMouse;
+    buttonStateChanged = any(abs(buttons - oldButtons));
+    if buttonStateChanged
+        oldButtons = buttons;
+    end
     %BETA: WE ALSO ALLOW PARTICIPANTS TO PRESS A KEY ON THE KEYBOARD
     %HERE SPACEBAR, WHICH WILL LEAD TO A TRIAL REPETITION
     if allowTrialRepeat

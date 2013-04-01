@@ -52,6 +52,7 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %FEEDBACK
 %Cfg.feedbackTrialCorrect               = [ {0} | 1 ] %BEEP FOR CORRECT RESPONSES %WILL BECOME FREQUENCY AND DURATION
 %Cfg.feedbackTrialError                 = [ {0} | 1 ] %BEEP FOR INCORRECT RESPONSES %WILL BECOME FREQUENCY AND DURATION
+%Cfg.feedbackResponseNumber             = [ {1} ]; %IF YOU WANT TO GIVE FEEDBACK REFER TO FIRST RESPONSE IN THIS TRIAL
 %
 %USER SUPPLIED
 %Cfg.userSuppliedTrialFunction          = [ {[]} | FUNCTIONHANDLE ]
@@ -207,7 +208,7 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %% ***ASF-MAIN LOOP***
 
 %DEFAULT CONFIGURATION
-Cfg.ASFVersion = 0.49;
+Cfg.ASFVersion = 0.51;
 %BETA FEATURES
 %INSTRUCTION TRIALS
 if ~isfield(Cfg, 'Instruction'), Cfg.Instruction = []; else end
@@ -249,6 +250,7 @@ if ~isfield(Cfg.Screen, 'useBackBuffer'), Cfg.Screen.useBackBuffer = 1; else end
 %SOUND SUPPORT
 if ~isfield(Cfg, 'Sound'), Cfg.Sound= []; else end;
 if ~isfield(Cfg.Sound, 'soundMethod'), Cfg.Sound.soundMethod = 'none'; else end; %[{'none'}|'psychportaudio'|'audioplayer'|'wavplay'|'snd']
+if ~isfield(Cfg.Sound, 'fSample'), Cfg.Sound.fSample = 44100; else end %MAKE SURE TO USE A FREQUENCY THAT THE SOUNDCARD SUPPORTS NATIVELY  96khz, 48khz, 44.1khz.
 
 %TRIAL EXECUTION SETTINGS USED IN SHOWTRIAL AND POSSIBLY USED IN USER
 %DEFINED TRIAL FUNCTION
@@ -264,6 +266,7 @@ if ~isfield(Cfg, 'waitUntilResponseAfterTrial'), Cfg.waitUntilResponseAfterTrial
 if ~isfield(Cfg, 'useTrialOnsetTimes'), Cfg.useTrialOnsetTimes = 0; else end;
 if ~isfield(Cfg, 'feedbackTrialCorrect'), Cfg.feedbackTrialCorrect = 0; else Cfg.sndOK = MakeBeep(1000, 0.1);end;
 if ~isfield(Cfg, 'feedbackTrialError'), Cfg.feedbackTrialError = 0; else Cfg.sndERR = MakeBeep(500, 0.1);end;
+if ~isfield(Cfg, 'feedbackResponseNumber'), Cfg.feedbackResponseNumber = 1; else end; %JVS 20130329
 if ~isfield(Cfg, 'onlineFeedback'), Cfg.onlineFeedback = 0; else end; %[{0}|1]
 if ~isfield(Cfg, 'video'), Cfg.video.writeVideo = 0; else end
 if ~isfield(Cfg.video, 'writeVideo'), Cfg.video.writeVideo = 0; else end;
@@ -456,13 +459,19 @@ try
         %ESPECIALLY PROGRAMMERS OF PLUGIN FNCTIONS MAY FORGET SOMETHING
         %check_trialinfo(TrialInfo(i));
         TrialInfo(i) = this_TrialInfo;
+        nResponses = length(TrialInfo(i).Response.RT);
+        if nResponses == 0
+            fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n', fix(TrialInfo(i).Response.RT), TrialInfo(i).Response.key, trial(i).correctResponse)
+        else
+            for iResponse = 1:nResponses
+                fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n', fix(TrialInfo(i).Response.RT(iResponse)), TrialInfo(i).Response.key(iResponse), trial(i).correctResponse);
+            end
+        end
         
         if Cfg.onlineFeedback
             %FEEDBACK ON OPERATOR SCREEN
-            fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n', fix(TrialInfo(i).Response.RT), TrialInfo(i).Response.key, trial(i).correctResponse);
+            %fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n', fix(TrialInfo(i).Response.RT), TrialInfo(i).Response.key, trial(i).correctResponse);
             ASF_onlineFeedback(ExpInfo, trial, TrialInfo, i)
-        else
-            fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n', fix(TrialInfo(i).Response.RT), TrialInfo(i).Response.key, trial(i).correctResponse);
         end
         
         %------------------------------------------------------------------
@@ -615,15 +624,49 @@ switch Cfg.Sound.soundMethod
         %INIT PSYCHPORTAUDIO
         % Perform basic initialization of the sound driver:
         InitializePsychSound(1)
-        PsychPortAudio('Verbosity', 0)
-        % Open the default audio device [], with default mode [] (==Only playback),
-        % and a required latencyclass of one 1 == low-latency mode, as well as
-        % a frequency of freq and nrchannels sound channels.
-        % This returns a handle to the audio device:
-        Cfg.Sound.pahandle = PsychPortAudio('Open',...
-            [], [], 4, Cfg.Sound.fSample, Cfg.Sound.nChannels);
-    case 'none'
-        fprintf(1, 'NOT USING ANY SOUND OUTPUT.\n');
+        PsychPortAudio('Verbosity', 0);
+        
+        
+        %NEEDS MORE COMMENTING
+        %------------------------------------------------------------------
+        %SUPPORT FOR PSYCHPORTAUDIO (THANKS TO SETH LEVINE)
+        if ~isfield(Cfg.Sound, 'nPlaybackDevices'), Cfg.Sound.nPlaybackDevices = 1; else end
+        if ~isfield(Cfg.Sound, 'nCaptureDevices'), Cfg.Sound.nCaptureDevices = 0; else end
+        if Cfg.Sound.nPlaybackDevices > 0
+            Dev = PsychPortAudio('GetDevices');
+            idxPlaybackDevs = find([Dev.NrOutputChannels]);
+            playbackDevs = [Dev(idxPlaybackDevs).DeviceIndex];
+            if length(playbackDevs) < Cfg.Sound.nPlaybackDevices
+                error('Insufficient number of available audio devices')
+            end
+            for i = 1:Cfg.Sound.nPlaybackDevices
+                Cfg.Sound.playbackHandle(i) = PsychPortAudio('Open',playbackDevs(i),1,...
+                    4, Cfg.Sound.fSample, Cfg.Sound.nChannels);
+            end
+        else
+        end
+        if Cfg.Sound.nCaptureDevices > 0
+            Dev = PsychPortAudio('GetDevices');
+            idxCaptureDevs = find([Dev.NrInputChannels]);
+            captureDevs = [Dev(idxCaptureDevs).DeviceIndex];
+            if length(captureDevs) < Cfg.Sound.nCaptureDevices
+                error('Insufficient number of available audio devices')
+            end
+            for i = 1:Cfg.Sound.nCaptureDevices
+                Cfg.Sound.captureHandle(i) = PsychPortAudio('Open',captureDevs(i),2,...
+                    4, Cfg.Sound.fSample, Cfg.Sound.nChannels);
+            end
+        end
+%         %------------------------------------------------------------------
+%         % Open the default audio device [], with default mode [] (==Only playback),
+%         % and a required latencyclass of one 1 == low-latency mode, as well as
+%         % a frequency of freq and nrchannels sound channels.
+%         % This returns a handle to the audio device:
+%         %pahandle = PsychPortAudio('Open' [, deviceid][, mode][, reqlatencyclass][, freq][, channels][, buffersize][, suggestedLatency][, selectchannels]);
+%         Cfg.Sound.pahandle = PsychPortAudio('Open',...
+%             [], [], 0, Cfg.Sound.fSample, Cfg.Sound.nChannels); %0 used to be 4; 0 is not acceptable JVS 20121204
+case 'none'
+    fprintf(1, 'NOT USING ANY SOUND OUTPUT.\n');
 end
 
 
@@ -1029,6 +1072,27 @@ switch Cfg.responseDevice
         fopen(Cfg.hardware.serial.oSerial);
         fprintf('DONE\n');
         %Cfg.hardware.serial.oSerial.BytesAvailable
+        
+    case 'ARDUINOSERIAL' %THIS IS A BAD EMULATION OF THE LUMINA BOX IN SERIAL MODE
+        if ~isfield(Cfg, 'hardware'), Cfg.hardware = []; else end
+        if ~isfield(Cfg.hardware, 'serial'), Cfg.hardware.serial = []; else end
+        if ~isfield(Cfg.hardware.serial, 'BaudRate'), Cfg.hardware.serial.BaudRate = 9600;else end
+        
+        fprintf(1, 'CREATING SERIAL OBJECT ... ');
+        Cfg.hardware.serial.oSerial = serial(Cfg.serialPortName, 'Tag', 'SerialResponseBox', 'BaudRate', Cfg.hardware.serial.BaudRate);
+        set(Cfg.hardware.serial.oSerial, 'Timeout', 0.001) %RECONSIDER
+        Cfg.hardware.serial.oSerial.Terminator = '';
+        set(Cfg.hardware.serial.oSerial,'InputBufferSize',128)
+        %Cfg.hardware.serial.oSerial.ReadAsyncMode = 'manual';%'continuous';
+        %Cfg.hardware.serial.ClassSerial = class(Cfg.hardware.serial, 'SerialResponseBox');
+        %dummy = warning( 'off', 'instrument:fscanf:unsuccessfulRead')
+        warning off all %THIS IS NASTY!!! We do this because of timeout warning
+        fprintf(1, 'DONE\n');
+        fprintf(1, 'STARTING SERIAL COMMUNICATION WITH SERIAL RESPONSE BOX (BAUD RATE: %d) ... ', Cfg.hardware.serial.BaudRate);
+        fopen(Cfg.hardware.serial.oSerial);
+        fprintf('DONE\n');
+        %Cfg.hardware.serial.oSerial.BytesAvailable
+          
     case  'KEYBOARD'
         fprintf(1, 'USING KEYBOARD AS RESPONSE DEVICE\n');
         
@@ -1145,6 +1209,7 @@ end
 %% ***TRIAL-PRESENTATION AND RENDERING***
 %% ShowTrial (SHOWTRIAL WITH MOUSE, SERIAL OR PARALLEL RESPONSE BOX AS RESPONSE DEVICE)
 function TrialInfo = ShowTrial(atrial, windowPtr, Stimuli, Cfg)
+if ~isfield(Cfg, 'feedbackResponseNumber'), Cfg.feedbackResponseNumber = 1; else end; %IF YOU WANT TO GIVE FEEDBACK REFER BY DEFAULT TO THE FIRST RESPONSE GIVEN IN THIS TRIAL
 %SAVE TIME BY ALLOCATING ALL VARIABLES UPFRONT
 
 % VBLTimestamp system time (in seconds) when the actual flip has happened
@@ -1189,7 +1254,7 @@ this_response.RT = [];
 
 %IF YOU WANT TO DO ANY OFFLINE STIMULUS RENDERING (I.E. BEFORE THE TRIAL
 %STARTS), PUT THAT CODE HERE
-
+responseCounter = 0; %COUNTS THE NUMBER OF RESPONSES GIVEN WITHIN THE ALLLOWED PERIOD
 %LOG DATE AND TIME OF TRIAL
 strDate = datestr(now); %store when trial was presented
 
@@ -1331,7 +1396,6 @@ for i = atrial.startRTonPage:atrial.endRTonPage
         
         if any(buttons)
             % ShowCursor
-            responseGiven = 1;
             %A BUTTON HAS BEEN PRESSED BEFORE TIMEOUT
             if Cfg.responseTerminatesTrial
                 %ANY CODE THAT YOU FEEL APPROPRIATE FOR SIGNALING THAT
@@ -1340,13 +1404,19 @@ for i = atrial.startRTonPage:atrial.endRTonPage
             else
                 %WAIT OUT THE REMAINDER OF THE STIMULUS DURATION WITH
                 %MARGIN OF toleranceSec
+                %MAKE THIS CONFIGURABLE AND GO HERE IF I ALLOW ONLY ONE
+                %RESPONSE? JVS20130329
                 wakeupTime = WaitSecs('UntilTime',...
                     StimulusOnsetTime + pageDuration_in_sec - toleranceSec);
             end
-            %FIND WHICH BUTTON IT WAS
-            this_response.key = find(buttons);
-            %COMPUTE RESPONSE TIME
-            this_response.RT = (t1 - StartRTMeasurement)*1000;
+            if responseGiven == 0
+                responseGiven = 1;
+                responseCounter = responseCounter + 1;
+                %FIND WHICH BUTTON IT WAS
+                this_response.key = find(buttons);
+                %COMPUTE RESPONSE TIME
+                this_response.RT = (t1 - StartRTMeasurement)*1000;
+            end
         end
     end
 end
@@ -1425,7 +1495,7 @@ end
 %TRIAL BY TRIAL FEEDBACK
 if Cfg.feedbackTrialCorrect || Cfg.feedbackTrialError
     ASF_trialFeeback(...
-        this_response.key == atrial.CorrectResponse, Cfg, windowPtr);
+        this_response.key(Cfg.feedbackResponseNumber) == atrial.CorrectResponse, Cfg, windowPtr);
 end
 
 %--------------------------------------------------------------------------
@@ -2253,7 +2323,7 @@ if isa(Cfg.userSuppliedTrialFunction, 'function_handle')
     fHandle = Cfg.userSuppliedTrialFunction;
 else
     switch Cfg.responseDevice
-        case {'MOUSE', 'LUMINAPARALLEL', 'LUMINASERIAL', 'KEYBOARD'}
+        case {'MOUSE', 'LUMINAPARALLEL', 'LUMINASERIAL', 'ARDUINOSERIAL', 'KEYBOARD'}
             fHandle = @ShowTrial;
         case 'VOICEKEY'
             fHandle = @ShowTrialVK;

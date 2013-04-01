@@ -48,9 +48,12 @@ fclose('all');
 switch Cfg.Sound.soundMethod
     case 'psychportaudio'
         fprintf(1, 'Closing PsychPortAudio ...');
-        PsychPortAudio('Stop', Cfg.Sound.pahandle);
+%         for iDev = 1:Cfg.Sound.nPlaybackDevices
+%             PsychPortAudio('Stop', Cfg.Sound.playbackHandle(iDev));
+%         end
         % Close the audio device:
-        PsychPortAudio('Close', Cfg.Sound.pahandle);
+        %PsychPortAudio('Close', Cfg.Sound.playbackHandle);
+        PsychPortAudio('Close');
         fprintf(1, ' DONE.\n');
     case 'audioplayer'
         warning('method for closing audioplayer not yet programmed')
