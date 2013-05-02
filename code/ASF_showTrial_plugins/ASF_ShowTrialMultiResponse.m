@@ -23,7 +23,7 @@ this_response = [];
 %BEFORE THE NEXT VERTICAL BLANK. FOR EXAMPLE IF THE RESPONSE WINDOW IS 1000
 %ms TOLERANCE MAKES THE RESPONSE COLLECTION CODE RETURN AFTER 1000ms-0.3
 %FRAMES, I.E. AFTER 995 ms AT 60Hz
-toleranceSec = Cfg.Screen.monitorFlipInterval*0.3;
+toleranceSec = Cfg.Screen.monitorFlipInterval*0.2; %was .3
 
 %HOWEVER, THIS MUST NOT BE LONGER THAN ONE FRAME
 %DURATION. EXPERIMENTING WITH ONE QUARTER OF A FRAME
@@ -154,6 +154,10 @@ end
 %SPECIAL TREATMENT FOR THE DISPLAY PAGES ON WHICH WE ALLOW REACTIONS
 allowResponse = 1;
 responseCounter = 0;
+DEBUGMSG = 1;
+if DEBUGMSG
+    fprintf(1, '\n');
+end
 for i = atrial.startRTonPage:atrial.endRTonPage
     if (i > atrial.nPages)
         break;
@@ -186,45 +190,126 @@ for i = atrial.startRTonPage:atrial.endRTonPage
         
         pageDuration_in_sec =...
             atrial.pageDuration(i)*Cfg.Screen.monitorFlipInterval;
-        
+
+        if DEBUGMSG
+            strMsg = sprintf('PAGE %03d SHOWN StimulusOnsetTime: %12.3f, pageDuration_in_sec: %5.3f', i, StimulusOnsetTime, pageDuration_in_sec);
+            logMsg(i, strMsg);
+        end
+    
         if allowResponse
+            if DEBUGMSG
+                strMsg = sprintf('ALLOW RESPONSE');
+                logMsg(i, strMsg);
+            end
+
+            %---------------------------
+            %WITH RESPONSE COLLECTION
+            %---------------------------
+            if DEBUGMSG
+                strMsg = sprintf('CHECK FOR RESPONSE WITH %5.3f secs timeout', pageDuration_in_sec - toleranceSec);
+                logMsg(i, strMsg);
+            end
+
             [x, y, buttons, t0, t1] =...
                 ASF_waitForResponse(Cfg, pageDuration_in_sec - toleranceSec);
             
+            if DEBUGMSG
+                strMsg = sprintf('RETURNED FROM RESPONSE CHECKING AFTER %5.3f secs (%5.3f ms after start of response collection)', t1 - t0, (t1 - StartRTMeasurement)*1000);
+                logMsg(i, strMsg);
+            end
             if any(buttons)
-                %YES. THIS ALSO MEANS THAT THE PAGE MAY HAVE TO BE SHOWN FOR LONGER.
+                if DEBUGMSG
+                    strMsg = sprintf('A RESPONSE BUTTON HAS BEEN PRESSED');
+                    logMsg(i, strMsg);
+                    fprintf(1, 'Buttons: ');
+                    fprintf(1, '%d ', buttons);
+                    fprintf(1, '\n');
+                end
+
+                %BUTTON HAS BEEN PRESSED
+                %THIS ALSO MEANS THAT THE PAGE MAY HAVE TO BE SHOWN FOR LONGER.
                 %IF MULTIPLE RESPONSES ARE ALLOWED EVEN WITH MORE RESPONSE COLLECTION
                 
                 %INCREASE RESPONSE COUNTER
                 responseCounter = responseCounter + 1;
+                if DEBUGMSG
+                    strMsg = sprintf('THIS IS THE %3d th RESPONSE IN THIS TRIAL', responseCounter);
+                    logMsg(i, strMsg);
+                end
+
                 %FIND WHICH BUTTON IT WAS
                 this_response.key(responseCounter) = find(buttons);
                 %COMPUTE RESPONSE TIME
                 this_response.RT(responseCounter) = (t1 - StartRTMeasurement)*1000;
                 switch Cfg.responseSettings.multiResponse
                     case 'responseTerminatesTrial'
+                        %NEED TO WORK ON THIS PART
                         break;
                     case 'allowMultipleResponses'
-                        boolContinue = 1;
-                        tEnd = StimulusOnsetTime + pageDuration_in_sec - toleranceSec;
+                        if DEBUGMSG
+                            strMsg = sprintf('ALLOW MULTIPLE RESPONSES');
+                            logMsg(i, strMsg);
+                        end
+
+                        %WE CHECK FOR MORE RESPONSES AS LONG AS THE PAGE HAS
+                        %NOT EXPIRED
+                        %T1 LOOKS STILL WRONG WHAT IS IT A RELATIVE OR AN
+                        %ABSOLUTE TIME?
+                        tRemain = pageDuration_in_sec - ( t1 - StimulusOnsetTime);
+                        tEnd = StimulusOnsetTime + tRemain; %ABSOLUTE TIME
+                        %CHECK WHETHER PAGE HAS EXPIRED
+                        boolContinue = GetSecs < tEnd;
                         while  (boolContinue)
-                            [x, y, buttons, t0, t1, extraKey, buttonStateChanged] =...
-                                ASF_waitForResponse(Cfg, tEnd);
-                            if (any(buttons)&buttonStateChanged)
+                            if DEBUGMSG
+                                strMsg = sprintf('CHECK FOR RESPONSE WITH %5.3f secs timeout', tRemain - toleranceSec);
+                                logMsg(i, strMsg);
+                            end
+
+                            [x, y, buttons, t0, t1, extraKey] =...
+                                ASF_waitForResponse(Cfg, tRemain - toleranceSec);
+                            if any(buttons)
+                                if DEBUGMSG
+                                    strMsg = sprintf('A RESPONSE BUTTON HAS BEEN PRESSED');
+                                    logMsg(i, strMsg);
+                                end
+
                                 %INCREASE RESPONSE COUNTER
                                 responseCounter = responseCounter + 1;
+                                if DEBUGMSG
+                                    strMsg = sprintf('THIS IS THE %3d th RESPONSE IN THIS TRIAL', responseCounter);
+                                    logMsg(i, strMsg);
+                                end
+                                
                                 %FIND WHICH BUTTON IT WAS
                                 this_response.key(responseCounter) = find(buttons);
                                 %COMPUTE RESPONSE TIME
                                 this_response.RT(responseCounter) = (t1 - StartRTMeasurement)*1000;
-                                
+                                tRemain = pageDuration_in_sec - ( t1 - StimulusOnsetTime);
+                                %CHECK WHETHER PAGE HAS EXPIRED
+                                boolContinue = GetSecs < (tEnd- toleranceSec);
+                            else
+                                %NO BUTTON PRESSED, WHAT IS tRemain NOW?
+                                if DEBUGMSG
+                                    strMsg = sprintf('%5.3f SECONDS HAVE PASSED. ', t1-t0); 
+                                    logMsg(i, strMsg);
+                                    strMsg = sprintf('NO ADDITIONAL RESPONSE BUTTON HAS BEEN PRESSED');
+                                    logMsg(i, strMsg);
+                                end
+
+                                tRemain = 0;
+                                boolContinue = 0;
+                                junk = GetSecs;
+                                strMsg = sprintf('%RC: 3d SOn: %12.2f StartRT %12.2f current: %12.2f', responseCounter, StimulusOnsetTime, StartRTMeasurement, junk);
+                                logMsg(i, strMsg);
                             end
-                            %CHECK WHETHER IT IS OK TO CHECK FOR MORE
-                            %RESPONSES
-                            boolContinue = GetSecs < tEnd;
                         end
-                        break;
+                       
                     case 'allowSingleResponse'
+                        if DEBUGMSG
+                            strMsg = sprintf('ALLOW ONLY SINGLE RESPONSE');
+                            logMsg(i, strMsg);
+                        end
+
                         %A BUTTON HAS BEEN PRESSED BEFORE TIMEOUT
                         allowResponse = 0; %NO FURTHER RESPONSE ALLOWED IN THIS TRIAL
                         %WAIT OUT THE REMAINDER OF THE STIMULUS DURATION WITH
@@ -232,6 +317,37 @@ for i = atrial.startRTonPage:atrial.endRTonPage
                         wakeupTime = WaitSecs('UntilTime',...
                             StimulusOnsetTime + pageDuration_in_sec - toleranceSec);
                 end
+            else
+                if DEBUGMSG
+                    strMsg = sprintf('NO BUTTON ON PAGE %d', i);
+                    logMsg(i, strMsg);
+                end
+
+            end
+        else
+            %-----------------------------------
+            %NO RESPONSE COLLECTION ON THIS PAGE
+            %This can occur when
+            %response period spans multiple pages, only one response
+            %allowed, and response already given on a previous page
+            %-----------------------------------
+            if DEBUGMSG
+                strMsg = sprintf('DO NOT ALLOW RESPONSE');
+                logMsg(i, strMsg);
+            end
+
+            %MAKE APPROPRIATE NUMBER OF NONDESTRUCTIVE FLIPS
+            nFlips = atrial.pageDuration(i) - 1; %WE ALREADY FLIPPED ONCE
+            for FlipNumber = 1:nFlips
+                %PRESERVE BACK BUFFER IF THIS TEXTURE IS TO BE SHOWN
+                %AGAIN AT THE NEXT FLIP
+                bPreserveBackBuffer = FlipNumber < nFlips;
+                
+                %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT
+                %IN THE BACKBUFFER IN CASE THE SAME IMAGE IS TO BE FLIPPED
+                %AGAIN TO THE SCREEN
+                ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(i)),...
+                    Cfg, bPreserveBackBuffer);
             end
         end
     end
@@ -245,7 +361,7 @@ end
 % (AFTER RESPONSE HAS BEEN GIVEN) SAME AS PHASE 2
 %--------------------------------------------------------------------------
 %OTHER PICS
-for i = atrial.endRTonPage+1:nPages
+for i = (atrial.endRTonPage+1):nPages
     if (i > atrial.nPages)
         break;
     else
@@ -336,3 +452,13 @@ TrialInfo.Response = this_response; %KEY AND RT
 TrialInfo.timing = timing; %TIMING OF PAGES
 TrialInfo.StartRTMeasurement = StartRTMeasurement; %TIMESTAMP START RT
 TrialInfo.EndRTMeasurement = EndRTMeasurement; %TIMESTAMP END RT
+
+function logMsg(iPage, strMsg)
+persistent lastTime;
+if isempty(lastTime)
+    lastTime = GetSecs;
+end
+
+curTime = GetSecs;
+fprintf('%12.3f\t%8d\tPAGE %04d\t MSG: %s\n', curTime, fix((curTime-lastTime)*1000), iPage, strMsg);
+lastTime = curTime;

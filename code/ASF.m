@@ -39,7 +39,7 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 % Cfg.synchToScannerPort                = [{'PARALLEL'}|'SERIAL', 'SIMULATE']; %PORT FOR EXTERNAL SYNCH SIGNAL
 % Cfg.scannerSynchTimeOutMs             = [ {inf} ] %TIMEOT IN MILLISECONDS WHEN WAITING FOR SCANNER TRIGGER ON ANY PORT
 % Cfg.digitalInputDevice                = [ {'NONE'}|'PARALLEL'|'NIDAQ2' ]
-% Cfg.digitalOutputDevice               = [ {'NONE'}|'PARALLEL'|'NIDAQ2' ]
+% Cfg.digitalOutputDevice               = [ {'NONE'}|'PARALLEL'|'NIDAQ2'|'ARDUINO' ]
 % Cfg.ScannerSynchShowDefaultMessage    = [0|{1}]
 % Cfg.scannerSynchTimeOutMs             = {inf} %BY DEFAULT WAIT FOREVER
 % Cfg.serialPortName                    = [ {'COM1'}, ... 'COMn' ]
@@ -340,7 +340,7 @@ Cfg.trialFileName = trialFileName;%'test.stm';
 Cfg.currentTrialNumber = 0;
 
 
-try
+%try
     %     Normally, only the statements between the TRY and CATCH are executed.
     %     However, if an error occurs while executing any of the statements, the
     %     error is captured into LASTERR and the statements between the CATCH
@@ -541,22 +541,22 @@ try
         timing_diagnosis(ExpInfo)
     end
     
-catch ME
-    display(ME)
-    display(ME.message)
-    %EMERGENCY SAVE DATA
-    ExpInfo.Cfg = Cfg;
-    ExpInfo.TrialInfo = TrialInfo;
-    fprintf('TRYING TO SAVE THE DATA. IT MAY BE INCOMPLETE! ...');
-    cmd = sprintf('save %s ExpInfo', expName);
-    eval(cmd)
-    fprintf(1, 'DONE.\n')
-    
-    %     % catch error
-    Cfg = ASF_PTBExit(windowPtr, Cfg, 1);
-    
-    %     PTBCatchError
-end % try ... catch %
+% catch ME
+%     display(ME)
+%     display(ME.message)
+%     %EMERGENCY SAVE DATA
+%     ExpInfo.Cfg = Cfg;
+%     ExpInfo.TrialInfo = TrialInfo;
+%     fprintf('TRYING TO SAVE THE DATA. IT MAY BE INCOMPLETE! ...');
+%     cmd = sprintf('save %s ExpInfo', expName);
+%     eval(cmd)
+%     fprintf(1, 'DONE.\n')
+%     
+%     %     % catch error
+%     Cfg = ASF_PTBExit(windowPtr, Cfg, 1);
+%     
+%     %     PTBCatchError
+% end % try ... catch %
 
 
 
@@ -1081,7 +1081,7 @@ switch Cfg.responseDevice
         fprintf(1, 'CREATING SERIAL OBJECT ... ');
         Cfg.hardware.serial.oSerial = serial(Cfg.serialPortName, 'Tag', 'SerialResponseBox', 'BaudRate', Cfg.hardware.serial.BaudRate);
         set(Cfg.hardware.serial.oSerial, 'Timeout', 0.001) %RECONSIDER
-        Cfg.hardware.serial.oSerial.Terminator = '';
+        Cfg.hardware.serial.oSerial.Terminator = 'LF/CR';%JVS
         set(Cfg.hardware.serial.oSerial,'InputBufferSize',128)
         %Cfg.hardware.serial.oSerial.ReadAsyncMode = 'manual';%'continuous';
         %Cfg.hardware.serial.ClassSerial = class(Cfg.hardware.serial, 'SerialResponseBox');

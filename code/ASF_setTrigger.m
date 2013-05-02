@@ -5,7 +5,7 @@ if Cfg.issueTriggers
         if ismember(triggerVal, Cfg.validTriggerValues)
             switch Cfg.digitalOutputDevice
                 case 'ARDUINO'
-                    ASF_arduinoTrigger(Cfg.hardware.Arduino.hSerial, Cfg.Trigger.triggerType)
+                    ASF_arduinoTrigger(Cfg.hardware.Arduino.hSerial, triggerVal, Cfg.Trigger.triggerType)
                 case 'PARALLEL'
                     %TRIGGER ON PARALLEL PORT
                     putvalue(Cfg.hardware.DigitalOutput.mydio.TriggerPort, triggerVal);

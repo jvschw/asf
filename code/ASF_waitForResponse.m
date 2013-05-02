@@ -1,4 +1,4 @@
-%function [x, y, buttons, t0, t1, buttonStateChanged] = ASF_waitForResponse(Cfg, timeout)
+%function [x, y, buttons, t0, t1] = ASF_waitForResponse(Cfg, timeout)
 %% ***RESPONSE COLLECTION***
 %% WaitForResponse Wrapper
 %WRAPPER FUNCTION THAT CHECKS FOR A RESPONSE USING:
@@ -8,15 +8,14 @@
 %KEYBOARD 
 %20071024 JS FIXED BUG THAT NOT PRESSING A RESPONSE BUTTON COULD LEAD TO PROGRAM STOP
 %20081126 JS FIXED BUG THAT RT WAS NOT RECORDED USING THE LUMINA BOX
-function [x, y, buttons, t0, t1, extraKey, buttonStateChanged] = ASF_waitForResponse(Cfg, timeout)
+function [x, y, buttons, t0, t1, extraKey] = ASF_waitForResponse(Cfg, timeout)
 if~isfield(Cfg, 'responseType'), Cfg.responseType = 'buttonDown'; else end;
-buttonStateChanged = NaN;
 extraKey = NaN;
 switch Cfg.responseDevice
     case 'MOUSE'
         switch Cfg.responseType
             case 'buttonDown'
-                [x, y, buttons, t0, t1, extraKey, buttonStateChanged] = WaitForMousePress(timeout, Cfg.responseSettings.allowTrialRepeat); %NEW 2nd arg
+                [x, y, buttons, t0, t1, extraKey] = WaitForMousePress(timeout, Cfg.responseSettings.allowTrialRepeat); %NEW 2nd arg
             otherwise
                 error(sprintf('MOUSE Unknown response type %s', Cfg.responseType));
         end
@@ -300,7 +299,12 @@ xlabel('Time [s]')
 ylabel('Signal')
 
 %% WaitForKeyboard
-function [keyCode, t0, t1] = WaitForKeyboard(Cfg, timeout)
+function [keyCode, t0, t1, buttonStateChanged] = WaitForKeyboard(Cfg, timeout)
+persistent oldKey;
+buttonStateChanged = 0;
+if isempty(oldKey)
+     oldKey = 0;
+end
 %buttons(4) = 0;
 keyIsDown = 0;
 t0 = GetSecs;
@@ -314,11 +318,22 @@ while (((t1 - t0) < timeout)&&(~keyIsDown)) % wait for press
 end
 if keyIsDown
     t1 = secs;
+    thisKey = find(keyCode);
+    buttonStateChanged = thisKey ~= oldKey;
+    if buttonStateChanged
+        oldKey = thisKey;
+    end
+
 end
 
 
 %% WaitForSerialBoxPress
 function [buttons, t0, t1] = WaitForSerialBoxPress(Cfg, timeout)
+persistent oldButtons;
+
+if isempty(oldButtons)
+     oldButtons = [0, 0, 0, 0];
+end
 buttons(4) = 0;
 t0 = GetSecs;
 t1 = t0;
@@ -363,6 +378,12 @@ while ((t1 - t0) < timeout) % wait for press
     end
     %T1 WILL EQUAL TIMEOUT IF NO BUTTON HAS BEEN PRESSED WITIN TIMEOUT
     t1 = GetSecs;
+
+    buttonStateChanged = any(abs(buttons - oldButtons));
+    if buttonStateChanged
+        oldButtons = buttons;
+    end
+
 end
 
 function [buttons, t0, t1] = WaitForSerialButtonUp(Cfg, timeout)
@@ -422,7 +443,7 @@ end
 %               THE PRESSED BUTTON(S) HAS/HAVE A 1
 %   T0, T1:     TIME WHEN THE FUNCTION IS ENTERED AND LEFT
 %**************************************************************************
-function [x, y, buttons, t0, t1, extraKey, buttonStateChanged] = WaitForMousePress(timeout, allowTrialRepeat)
+function [x, y, buttons, t0, t1, extraKey] = WaitForMousePress(timeout, allowTrialRepeat)
 buttons = 0;
 t0 = GetSecs;
 t1 = t0;
@@ -430,14 +451,22 @@ x = NaN; y = NaN;
 keyIsDown = 0;
 keyCode = NaN;
 extraKey = NaN;
+buttonStateChanged = 0;
 persistent oldButtons;
 
 if isempty(oldButtons)
      oldButtons = [0, 0, 0];
 end
-while (~any(buttons) && ((t1 - t0)<timeout) &&(~keyIsDown)) % wait for press
+%while (~any(buttons) && ((t1 - t0)<timeout) &&(~keyIsDown)) % wait for press
+
+%LOOP UNTIL
+%THE BUTTON STATE CHANGES
+%TIME EXPIRES
+%A KEY IS PRESSED
+while (~buttonStateChanged && ((t1 - t0)<timeout) &&(~keyIsDown)) % wait for press
     [x, y, buttons] = GetMouse;
     buttonStateChanged = any(abs(buttons - oldButtons));
+    %buttonStateChanged = any((buttons - oldButtons)>0);%ONLY SIGNAL STATE CHANGE IF A NEW BUTTON IS PUSHED (NOT IF ONE IS RELEASED)
     if buttonStateChanged
         oldButtons = buttons;
     end
@@ -456,7 +485,12 @@ end
 if keyIsDown
     extraKey = keyCode;
 end
-% 
+if ~buttonStateChanged
+    %I AM NOT SURE THIS IS GOOD
+    buttons = [0, 0, 0];
+    oldButtons = [0, 0, 0];
+end
+oldButtons =[];
 % function [x, y, buttons, t0, t1] = WaitForMousePress(timeout)
 % buttons = 0;
 % t0 = GetSecs;
@@ -478,8 +512,13 @@ end
 %needs a handle to a digital IO port hDIO
 %returns dio line status
 %x and y are unused dummies to keep compatibility with mouse
-function [x, y, buttons, t0, t1] = WaitForLuminaPress(hDIO, timeout)
+function [x, y, buttons, t0, t1, buttonStateChanged] = WaitForLuminaPress(hDIO, timeout)
 %function [x, y, buttons] = WaitForLuminaPress(hDIO, timeout)
+persistent oldButtons;
+
+if isempty(oldButtons)
+     oldButtons = zeros(1, 4);
+end
 buttons = zeros(1, 8);
 t0 = GetSecs;
 t1 = t0;
@@ -495,4 +534,8 @@ while (~any(buttons(1:4)) && (t1 - t0)<timeout) % wait for press
     WaitSecs(0.001);
 end
 buttons = buttons(1:4); %ONLY USE FIRST 4 BUTTONS
+buttonStateChanged = any(abs(buttons - oldButtons));
+if buttonStateChanged
+    oldButtons = buttons;
+end
 

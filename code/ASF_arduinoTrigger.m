@@ -1,5 +1,5 @@
-function ASF_arduinoTrigger(s, triggerType)
-%function ASF_arduinoTrigger(s, triggerType)
+function ASF_arduinoTrigger(s, value, triggerType)
+%function ASF_arduinoTrigger(s, value, triggerType)
 %TRIGGER TYPES CAN BE
 %'pulse': emit a pulse
 %'state': just change the trigger level
@@ -14,7 +14,7 @@ function ASF_arduinoTrigger(s, triggerType)
 %FUTURE VERSIONS WILL ALLOW SENDING A VALUE NOT JUST AN ON OR OFF STATE
 switch triggerType
     case 'pulse'
-        fprintf(s, '%c', 55);
+        fprintf(s, '%c', value);
     case 'state'
         fprintf(s, '%c', 56);
         fprintf(1, 'ASF_arduinoTrigger: Trigger type ''state'' not (yet) implemented.\');
