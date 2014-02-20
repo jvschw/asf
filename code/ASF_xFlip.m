@@ -2,6 +2,7 @@
 %% ASF_xFlip (extended Screen('Flip'))
 function [ VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos ] = ASF_xFlip(windowPtr, texture, Cfg, bPreserveBackBuffer)
 persistent frameCounter
+
 % persistent flipval
 %
 % if isempty( flipval )
@@ -54,13 +55,31 @@ if bUpDn % break out of loop
 %                 bAbort = 1;
 %             end
 %     end
-    if ismember(find(keyCodeKbCheck), [20, 81])
+    if ismember(find(keyCodeKbCheck), [20, 81]) %quit press q 
         fprintf(1, 'USER ABORTED PROGRAM\n');
+         
         ASF_PTBExit(windowPtr, Cfg, 1)
         %FORCE AN ERROR
         error('USERABORT')
         %IF TRY/CATCH IS ON THE FOLLOWING LINE CAN BE COMMENTED OUT
         %PTBExit(windowPtr);
     end
+
+    %PAUSE? press p, only tested on windows
+    if ismember(find(keyCodeKbCheck), [80])
+        %IF USING fNIRS, PAUSE DATA ACQUISITION
+        ASF_setTrigger(Cfg, 64) %ISS IMAGENT DATA ACQUISITION TRIGGER
+        fprintf(1, 'USER PAUSED PROGRAM\n');
+        Screen('Flip', windowPtr);
+        Screen('DrawText', windowPtr, 'PAUSE - PRESS ANY KEY TO CONTINUE', 20, Cfg.Screen.centerY);
+        Screen('Flip', windowPtr);
+        pause
+        FlushEvents;
+        %Screen('DrawTexture', windowPtr, texture);
+        %IF USING fNIRS, REENABLE DATA ACQUISITION
+        [VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos] = Screen('Flip', windowPtr);
+        ASF_setTrigger(Cfg, 64); %ISS IMAGENT DATA ACQUISITION TRIGGER
+    end
+
 end
 

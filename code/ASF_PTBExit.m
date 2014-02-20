@@ -72,6 +72,7 @@ end
 Priority(0);
 fprintf(1, 'DONE\n')
 
+
 %SHUT DOWN SERIAL PORT
 out = instrfind('Tag', 'SerialResponseBox');
 if  ~isempty(out)

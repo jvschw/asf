@@ -19,4 +19,8 @@ trdName = makeExampleCentralTrd(projectName);
 %RUN EXPERIMENT
 ExpInfo = ASF(stdName, trdName, logName, Cfg);
 
-ASF_timingDiagnosis(ExpInfo); %CONTROL TIMING 
+%CONTROL TIMING 
+ASF_timingDiagnosis(ExpInfo); 
+
+%RUN DATA ANALYSIS
+analyzeExampleCentral('exampleCentral')
