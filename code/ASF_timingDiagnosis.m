@@ -146,16 +146,17 @@ end
 
 
 figure
-%mysurf(deltamat)
+mysurf(deltamat)
+figure
 mybar3(deltamat)
 
 
 function mysurf(deltamat)
 if size(deltamat, 2) > 1
-    surf(deltamat)
+    surf(deltamat')
     shading interp
-    xlabel('Page Number')
-    ylabel('Trial Number')
+    ylabel('Page Number')
+    xlabel('Trial Number')
     zlabel('Deviation [ms]')
     title('Timing Accuracy of Experiment')
     %set(gca, 'zlim', [-20 20])
@@ -190,7 +191,8 @@ shading interp
 for i = 1:length(h)
     zdata = get(h(i),'Zdata');
     set(h(i),'Cdata',zdata)
-    set(h,'EdgeColor','k')
+    %set(h,'EdgeColor','k')
+    set(h,'EdgeColor','none')
 end
 
 xlabel('Page Number')
