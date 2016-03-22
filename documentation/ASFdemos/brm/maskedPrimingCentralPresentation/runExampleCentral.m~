@@ -1,0 +1,33 @@
+function ExpInfo = runExampleCentral
+%THIS PROGRAM PUTS TOGETHER 
+% -CREATION OF TRIAL DEFINITION FILE (TRD)
+% -RUNNING A MASKED PRIMING EXPERIMENT IN WHICH STIMULI ARE
+%  CENTRALLY PRESENTED
+% -POSTHOC CHECKING OF TIMING ERRORS
+% -SIMPLE FACTORIAL DATA ANALYSIS
+%%ASF Jens Schwarzbach
+
+Cfg = []; %DEFAULT CONFIGURATION
+
+switch computer
+    case 'MACI64'
+        Screen('Preference', 'SkipSyncTests', 1);
+        Cfg.Screen.Resolution.width = 1024;
+        
+end
+
+projectName = 'exampleCentral';
+stdName = 'example.std';
+logName = projectName;
+
+%MAKE TRD FILE
+trdName = makeExampleCentralTrd(projectName);
+
+%RUN EXPERIMENT
+ExpInfo = ASF(stdName, trdName, logName, Cfg);
+
+%CONTROL TIMING 
+ASF_timingDiagnosis(ExpInfo); 
+
+%RUN DATA ANALYSIS
+analyzeExampleCentral('exampleCentral')
