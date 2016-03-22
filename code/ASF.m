@@ -120,6 +120,11 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %Cfg.synchToScannerPort = 'IO64'; %see http://apps.usd.edu/coglab/psyc770/IO64.html
 %[ExpInfo] = ASF('Demo1.std', 'Demo1.trd', 'testsubject', Cfg) %FROM ASF's DEMO DIRECTORY
 %
+%% TODO SCENARIOS
+%% -USER SUPPLIED STM COLUMNS
+%% -USER SUPPLIED TRIAL PRESENTATION FUNCTION
+%% -ADAPTIVE PROCEDURES
+%% -EYE TRACKING EXAMPLE
 
 %% SCENARIOS THAT NEED TO BE OVERHAULED AND TESTED
 %% VOICEKEY, PARALLEL PORT, OLD COMPUTER

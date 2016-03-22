@@ -120,8 +120,12 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %Cfg.synchToScannerPort = 'IO64'; %see http://apps.usd.edu/coglab/psyc770/IO64.html
 %[ExpInfo] = ASF('Demo1.std', 'Demo1.trd', 'testsubject', Cfg) %FROM ASF's DEMO DIRECTORY
 %
+%% TODO SCENARIOS
+%% -USER SUPPLIED STM COLUMNS
+%% -USER SUPPLIED TRIAL PRESENTATION FUNCTION
+%% -ADAPTIVE PROCEDURES
 
-%% SCENARIOS THAT NEED TO BE OVERHA
+%% SCENARIOS THAT NEED TO BE OVERHAULED AND TESTED
 %% VOICEKEY, PARALLEL PORT, OLD COMPUTER
 %Cfg.Screen.useBackBuffer = 0; %OLD COMPUTER
 %Cfg.Screen.rect = [1, 1, 640, 480]; %USE PART OF THE SCREEN
@@ -157,89 +161,7 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %[ExpInfo] = ASF('Demo1.std', 'Demo1.trd', 'testsubject', Cfg) %FROM ASF's HOME DIRECTORY
 %
 %
-%20070620 ADDED     VERSION ENTRY TO Cfg
-%20070620 REMOVED   "WaitSecs(0.001);" IN WaitForMousePress FUNCTION
-%20070622 ADDED     VoiceKey functionality
-%20070622 ADDED     TRIGGER OUTPUT FOR MEG/EEG (requires data acquisition toolbox)
-%20070624 ADDED     NONDESTRUCTIVE FLIPPING
-%20070710 ADDED     SYNCHRONIZATION TO EXTERNAL TRIGGERS
-%20070906 ADDED     GRACEFUL EXIT WHEN STM or STIMDEF FILES ARE NOT FOUND
-%20070906 ADDED     TRIAL ONSET TIMES ARE NOW CODED IN THE SECOND COLUMN OF STM FILES
-%                   USER CAN DECIDE WHETHER TO USE OR IGNORE THEM BY
-%                   SETTING Cfg.useTrialOnsetTimes FLAG
-%20070906 ADDED     TRIAL BY TRIAL FEEDBACK: Cfg.feedbackTrialCorrect, Cfg.feedbackTrialError
-%20070906 ADDED     GRACEFUL EXIT WHEN PRESSING THE q BUTTON REPEATEDLY
-%20070930 ADDED     READ TEXT AND SOUND STIMULI
-%20071010 FIXED     REMOVED ERROR THAT OCCURRED WHEN NO DATA ACQUISITION TOOLBOX WAS INSTALLED
-%20071103 FIXED     INCREASED MEMORY EFFICIENCY (ALTHOUGH STILL ROOM FOR IMPROVEMENTS)
-%20071128 CHANGED   PTB_Init does not return rect directly any more, the screen rect is now Cfg.Screen.rect
-%20071202 CHANGED   starting to adjust all variable names according to mixedCase convention.
-%                   This means, that variables start lower case and each new word with upper case.
-%                   BUT: structures start with upper case, e.g. Cfg, Cfg.Screen etc.
-%                   Example: cfg.UseBackBuffer became Cfg.useBackBuffer
-%                   (which in the meantime has changed again to Cfg.Screen.useBackBuffer)
-%                   THIS WILL AFFECT PLUGINS WRITTEN BY USERS BASED ON PREVIOUS TEMPLATES
-%20071203 ADDED     KEYBOARD as possible response device
-%20071203 ADDED     FEEDBACK: COMMAND WINDOW SHOWS RT AND KEY FOR EACH TRIAL
-%20080114 CHANGED   HANDLING OF DIGITAL IO, NOW DIGITAL INPUT CAN BE DONE
-%                   ON DIFFERENT HARDWARE THAN DIGITAL OUTPUT (SO FAR PARALLEL PORT AND NIDAQ)
-%20080114 ADDED     TMS DEMO
-%20080126 ADDED     EYELINK CODE AND DEMO (AL)
-%20080219 ADDED     RANDOMIZATION WITH RESTRICTION
-%20080607 ADDED     SCREEN RESOLUTION AND REFRESH RATE CONFIGURABLE, DEFAULT 1024x768@60Hz
-%20080707 ADDED     BUGFIX RT REPORTED WRONGLY WHEN USING LUMINA BOX ON SERIAL PORT
-%20080707 ADDED     EYELINK LOGS ONSET OF EVERY PAGE
-%20080725 ADDED     TRD FILE ALSO CONTAIN FACTOR NAMES (DOWNWARD COMPATIBILITY WITH TRD FILES THAT DON'T HAVE THIS FEATURE)
-%20081014 ADDED     TMS BURST MODE USING NI-CARD
-%20081127 BUGFIX    RT TIMES ARE NOW CORRECTLY RECORDED USING THE LUMINA SERIAL BOX (HOWEVER IT DISCARDS SIMULTANEOUS BUTTON PRESSES AT THIS TIME)
-%20081205 ADDED     parameter Cfg.enableTimingDiagnosis TIMING DIAGNOSIS IS OFF BY DEFAULT, BECAUSE IT HAS CREATED TROUBLE WITH USER PLUGINS
-%20081205 BUGFIX    Cfg.defaultFontSize and Cfg.Screen.defaultTextColor NOW BEHAVE PROPERLY
-%20081205 BUGFIX    OLDER BUILDS OF PTB DID NOT KNOW Screen('Resolutions'), this command is now ignored by older builds; Will soon change to: Program exists and requests update of PTB
-%20090127 CHANGED   Cfg.defaultFontSize is called Cfg.Screen.fontSize
-%20090127 CHANGED   Cfg.Screen.defaultTextColor is called Cfg.Screen.textColor
-%20090127 ADDED     Cfg.Screen.fontName lets you determine which font ASF uses (default 'Courier')
-%20090127 CHANGED   internal variable Cfg.MonitorFlipInterval renamed to Cfg.Screen.monitorFlipInterval
-%20090127 CHANGED   internal variable Cfg.newResolution renamed to Cfg.Screen.NewResolution (it's a structure)
-%20090127 CHANGED   All EyeLink related cfg settings (useEyelink, doDriftCorrection, doCalibration, useEyelinkMouseMode, edfLargeCalibrationTargets, edfName) are now moved to a structure Cfg.Eyetracking
-%20090127 CHANGED   Cfg.useBackBuffer to Cfg.Screen.useBackBuffer (ATTENTION: this may require updating of user-supplied trial functions; ASF forces functions to crash that do not comply)
-%20090223 BUGFIX    fixed some internal inconsistencies (Cfg was still sometimes called cfg)
-%20090223 ADDED     when no suitable graphics mode can be found, program now provides list of available modes
-%20090228 ADDED     simulated synchronization to scanner, see Cfg.synchToScannerPort
-%20090302 CHANGED   previously undocumented feature of configurable timeout when waiting for trigger pulses
-%                   was treated separately for different ports (Cfg.timeOutWaitSerial, Cfg.timeOutWaitParallel).
-%                   This has been replaced by a unified setting Cfg.scannerSynchTimeOutMs with default value of inf.
-%20090302 BUGFIX    removed all references to hardware from ExpInfo at exit. Remaining hardware objects
-%                   have been creating problems when loading results on a computer othe than the
-%                   experimental computer (different harware, different toolboxes, different OS)
-%20090303 BUGFIX    Accessing an external function for the first time can require hundreds of milliseconds.
-%                   This may create timing inaccuracies. ASF_waitForScannerSynch, ASF_waitForResponse are now
-%                   preloaded by ASFInit.
-%20090325 CHANGED   ASF_timing_diagnostics can handle trials that only show two pages
-%20090325 ADDED     Now you can change the serial port through which ASF communicates with the Lumina box.
-%                   Default setting is Cfg.serialPortName = 'COM1'
-%20090519           V 0.38
-%20090519 BUGFIX    Possible crash at startup because the default screen resolution may not be available. Now, ASF's default screen resolution is
-%                   the one that the computer is currently in
-%20090525 ADDED     Checks for the presence of requested std and trd file before initializing graphics
-%20091019 CHANGED   All ASF-functions follow this naming convention ASF_doThisAndThat.m
-%                   (this may require many changes in your self-written programs). See documentation about how to do this with little effort
-%20091021 ADDED     Cfg.Screen.skipSyncTests needed to run ASF on certain systems
-%20091021 CHANGED   the way ASF tried to ensure that PTB functions for
-%                   hardware commands exist has been updated because it did not catch some
-%                   problems. This led to errors upon program termination with data loss
-%20100118 BUGFIX    initialization of parallel port now updates Cfg structure
-%V.041
-%20100314 BUGFIX    some Eyelink-related structures (driftCorrection was not properly named)
-%20100314 ADDED     Current OS's screen settings are used as default screen settings (before ASF tried to force machine into certain setting)
-%20100314 CHANGED   Current OS's screen settings are used as default screen settings (before ASF tried to force machine into certain setting)
-%V.042
-%V.043
-%20101222 ADDED     support for PsychPortAudio
-%20110106 ADDED     Valid trigger values
-%
-%20150331 BUGFIX    Several fixes to audio-related parts
-%20150331 ADDED     Several howtos for writing plugins (presentText, presentSound)
-%
+%% LATEST CHANGES
 %%V.054
 %20160321 ADDED     When using the keyboard all keys are disabled by default. The user needs to provide a list of enabled keys. 
 %20160321 ADDED     empty expName means that no results will be logged
@@ -798,9 +720,9 @@ fprintf(1, 'DONE\n');
 %FOR INPUT
 if Cfg.synchToScanner
     switch Cfg.synchToScannerPort
-        case 'REGENSBURG64'
-            Cfg.hardware.scannerUREG = io64();
-            [triggerNo, triggerList]=checkTriggerSignal64(1, 2, Cfg.hardware.scannerUREG);
+        case 'IO64'
+            Cfg.hardware.scannerIO64 = io64();
+            [triggerNo, triggerList] = checkTriggerSignal64(1, 2, Cfg.hardware.scannerIO64);
             %ADD ERROR CHECKING
 
         case 'PARALLEL'
