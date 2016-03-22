@@ -37,13 +37,18 @@ midY = round((rect(4) - rect(2)+1)/2);
 
 %textOut=1; %write reports from tracker to stdout
 %edfFile = sprintf('%s.edf', expName);
-edfFile = edfName; %WE NEED TO ADD CODE THAT MAKES SURE THAT THE FILENAME IS NOT LONGER THAN X CHARACTERS
+edfFile = edfName; %WE NEED TO ADD CODE THAT MAKES SURE THAT THE FILENAME IS NOT LONGER THAN 8 CHARACTERS
 
 %--------initialize eyelink default settings-----------
 %el=EyelinkInitDefaults(windowPtr);
 %el=EyelinkInitDefaults(windowPtr, largeCalibTargets);
 
-status=Eyelink('command','link_sample_data = LEFT,RIGHT,GAZE,AREA,GAZERES,HREF,PUPIL,STATUS,INPUT');
+   
+
+
+status=Eyelink('command', 'link_sample_data = LEFT,RIGHT,GAZE,AREA,GAZERES,HREF,PUPIL,STATUS,INPUT');
+status=Eyelink('command', 'link_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON');
+
 if status~=0
     error('link_sample_data error, status: ', status); % make sure that we get gaze data from the Eyelink
 end
@@ -72,7 +77,7 @@ end
 
 %--------initialize keys--------
 stopkey=KbName('space');
-startkey=KbName('middle_mouse');
+startkey=KbName('s'); %was middle_mouse
 
 %--------just an initializer to remind us to ask tracker which eye is tracked--------
 eye_used = -1; 

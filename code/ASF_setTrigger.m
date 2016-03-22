@@ -7,7 +7,7 @@ if Cfg.issueTriggers
                 case 'ARDUINO'
                     ASF_arduinoTrigger(Cfg.hardware.Arduino.hSerial, triggerVal, Cfg.Trigger.triggerType)
                     %DEBUGGING
-                    fprintf(1, 'MARKER %d\n', triggerVal);
+                    %fprintf(1, 'MARKER %d\n', triggerVal);
                 case 'PARALLEL'
                     %TRIGGER ON PARALLEL PORT
                     putvalue(Cfg.hardware.DigitalOutput.mydio.TriggerPort, triggerVal);
@@ -22,6 +22,10 @@ if Cfg.issueTriggers
                             WaitSecs(0.005);
                             putvalue(Cfg.hardware.DigitalOutput.mydio.TriggerPort, 0);
                     end
+                case 'PARALLEL32'
+                    lptwrite(888, triggerVal)
+                    WaitSecs(0.004)
+                    lptwrite(888, 0)
                             
                 case 'NIDAQ2'
             end
@@ -29,5 +33,7 @@ if Cfg.issueTriggers
     end
 end
 
-%TRIGGER FOR EYELINK
-Cfg = ASF_sendMessageToEyelink(Cfg, sprintf('PAGE %04d', triggerVal));
+if Cfg.issueDebugTriggers
+    tNow = GetSecs;
+    fprintf(1, 'TRIGGER CODE %3d AT T = %8.3f\n', triggerVal, tNow - Cfg.experimentStart);
+end

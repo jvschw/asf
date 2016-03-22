@@ -8,9 +8,17 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 % jens.schwarzbach@unitn.it
 %-------------------------------------------------------------
 %
+%
 %CONFIGURATIONS. Options are given in [] with default being between {}
 %
+%START, END, PAUSE, ABORT:
+% Cfg.specialKeys.quitExperiment        = [ {20} ]; %Pressing this key ('q' on a Mac) during a page flip will abort the experiment
+% Cfg.specialKeys.pauseExperiment       = [ {19} ]; %Pressing this key ('p' on a Mac) during a page flip will pause and resume the experiment
+% Cfg.specialKeys.startExperiment       = [{'MOUSE'}, 'RESPONSEDEVICE']; %
+% Cfg.specialKeys.endExperiment         = [{'MOUSE'}, 'RESPONSEDEVICE', 'NONE']; %
+%
 %DISPLAY:
+% Cfg.Screen.skipSyncTests              = [{0} | 1]
 % Cfg.Screen.rect                       = [{[]}, [ulRowStart, ulColStart, ulRowEnd, ulColEnd] ]
 % Cfg.Screen.useBackBuffer              = [ 0 | {1} ]   %USE AUXILIARY BACKBUFFERS FOR PAGE FLIPPING
 % Cfg.Screen.color                      = [{[255, 255, 255]}|[R, G, B]] %DEFAULTS TO WHITE BACKGROUND
@@ -25,7 +33,10 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 % Cfg.Sound.soundMethod                 = [{'none'}|'psychportaudio'|'audioplayer'|'wavplay'|'snd']
 %
 %RESPONSE
+% Cfg.specialKeys.quitExperiment        = [ {20} ]; %Pressing this key ('q' on a Mac) during a page flip will abort the experiment
+% Cfg.specialKeys.pauseExperiment       = [ {19} ]; %Pressing this key ('p' on a Mac) during a page flip will pause and resume the experiment
 % Cfg.responseDevice                    = [ {'MOUSE'}|'VOICEKEY'|'LUMINAPARALLEL'|'SERIAL'|'KEYBOARD' ]
+% Cfg.enabledKeys                       = [ {[]} ] %PROVIDE A LIST OF KEYS THAT KbCheck ACTUALLY CONSIDERS 
 % Cfg.responseTerminatesTrial           = [ {0}, 1 ]
 % Cfg.waitUntilResponseAfterTrial       = [ {0}, 1 ]
 % Cfg.plotVOT                           = [ {0}, 1 ]    %PLOT VOICE ONSET TIMES, REQUIRES TWO SCREENS
@@ -66,11 +77,24 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %%EXAMPLE CALL
 %[ExpInfo] = ASF('Demo1.std', 'Demo1.trd', 'testsubject', []) %FROM ASF's DEMO DIRECTORY
 %
-%%SAME WITH KEYBOARD INSTEAD OF MOUSE
+%%SAME BUT NO RESULT LOGGING
+%[ExpInfo] = ASF('Demo1.std', 'Demo1.trd', [], []) %FROM ASF's DEMO DIRECTORY
+%
+%
+%RESPOND WITH KEYBOARD INSTEAD OF MOUSE (you must provide a list of enabled keys)
+%Cfg.Screen.skipSyncTests = 1;
 %Cfg.responseDevice = 'KEYBOARD'
+%Cfg.enabledKeys = [80, 79]; %LEFT ARROW, RIGHT ARROW (on a Mac)
 %[ExpInfo] = ASF('Demo1.std', 'Demo1.trd', 'testsubject', Cfg) %FROM ASF's DEMO DIRECTORY
 %
-%%SAME BUT RUNNING IN THE MR WITH LUMINA BOX
+%Cfg.Screen.skipSyncTests = 1;
+%Cfg.responseDevice = 'KEYBOARD'
+%Cfg.enabledKeys = [80, 79]; %LEFT ARROW, RIGHT ARROW (on a Mac)
+%Cfg.specialKeys.startExperiment = 'RESPONSEDEVICE';
+%Cfg.specialKeys.endExperiment = 'NONE';
+%[ExpInfo] = ASF('Demo1.std', 'Demo1.trd', [], Cfg) 
+%
+%% RUNNING IN THE MR WITH LUMINA BOX
 % %EPSON IN MR
 % Cfg.Screen.xDimCm = 42;
 % Cfg.Screen.yDimCm = 34;
@@ -197,6 +221,14 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %20101222 ADDED     support for PsychPortAudio
 %20110106 ADDED     Valid trigger values
 %
+%20150331 BUGFIX    Several fixes to audio-related parts
+%20150331 ADDED     Several howtos for writing plugins (presentText, presentSound)
+%
+%%V.054
+%20160321 ADDED     When using the keyboard all keys are disabled by default. The user needs to provide a list of enabled keys. 
+%20160321 ADDED     empty expName means that no results will be logged
+%20160322 ADDED     Configurable way to start and end experiments Cfg.specialKeys.startExperiment and Cfg.specialKeys.endExperimen
+%
 %TO DOs
 %rename Cfg.hardware to Cfg.Hardware (because Hardware is a structure itself)
 %add MEG related hardware inits
@@ -208,7 +240,7 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %% ***ASF-MAIN LOOP***
 
 %DEFAULT CONFIGURATION
-Cfg.ASFVersion = 0.51;
+Cfg.ASFVersion = 0.54;
 %BETA FEATURES
 %INSTRUCTION TRIALS
 if ~isfield(Cfg, 'Instruction'), Cfg.Instruction = []; else end
@@ -221,7 +253,6 @@ if ~isfield(Cfg, 'Fixation'), Cfg.Fixation = []; else end;
 if ~isfield(Cfg.Fixation, 'fixType'), Cfg.Fixation.fixType = 1; else end; %1 square, 2 dot (1 is safer for certain graphics cards)
 if ~isfield(Cfg.Fixation, 'offsetX'), Cfg.Fixation.offsetX = 0; else end;
 if ~isfield(Cfg.Fixation, 'offsetY'), Cfg.Fixation.offsetY = 0; else end;
-
 
 %SCREEN SETTINGS
 if ~isfield(Cfg, 'Screen'), Cfg.Screen = []; else end;
@@ -275,9 +306,6 @@ if ~isfield(Cfg.video, 'saveCurrentFrame'), Cfg.video.saveCurrentFrame = 0; else
 if ~isfield(Cfg, 'responseSettings'), Cfg.responseSettings.allowTrialRepeat = 0; else end
 if ~isfield(Cfg.responseSettings, 'allowTrialRepeat'), Cfg.responseSettings.allowTrialRepeat = 0; else end
 
-%NOT SURE WETHER THIS WILL STAY
-if ~isfield(Cfg, 'task'), Cfg.task = 'default'; else end; %ALTERNATIVES: [ {'DEFAULT'}, 'AUDITORYODDBALL' ]
-
 %MISC STIMULATION DEVICE SETTINGS
 %OTHER STIMULATION DEVICES:
 if ~isfield(Cfg, 'StimulationDevices'), Cfg.StimulationDevices = []; else end;
@@ -290,15 +318,41 @@ if ~isfield(Cfg.hardware.Arduino, 'useArduino'), Cfg.hardware.Arduino.useArduino
 if ~isfield(Cfg.hardware.Arduino, 'comPort'), Cfg.hardware.Arduino.comPort = []; else end;
 if ~isfield(Cfg.hardware.Arduino.comPort, 'port'), Cfg.hardware.Arduino.comPort.port = 'COM4'; else end;
 if ~isfield(Cfg.hardware.Arduino.comPort, 'baudRate'), Cfg.hardware.Arduino.comPort.baudRate = 9600; else end;
+if ~isfield(Cfg.hardware, 'Serial'), Cfg.hardware.Serial = []; else end;
+if ~isfield(Cfg.hardware.Serial, 'useSerialOut'), Cfg.hardware.Serial.useSerialOut = 0; else end;
+if ~isfield(Cfg.hardware.Serial, 'comPort'), Cfg.hardware.Serial.comPort = []; else end;
+if ~isfield(Cfg.hardware.Serial.comPort, 'port'), Cfg.hardware.Serial.comPort.port = 'COM4'; else end;
+if ~isfield(Cfg.hardware.Serial.comPort, 'baudRate'), Cfg.hardware.Serial.comPort.baudRate = 9600; else end;
+
 if ~isfield(Cfg, 'Trigger'), Cfg.Trigger = []; else end;
 if ~isfield(Cfg.Trigger, 'triggerType'), Cfg.Trigger.triggerType = 'pulse'; else end;
 
 %RESPONSE DEVICE SETTINGS
 if ~isfield(Cfg, 'responseDevice'), Cfg.responseDevice = 'MOUSE'; else end; %[ {'MOUSE'}|'VOICEKEY'|'LUMINAPARALLEL'|'SERIAL'|'KEYBOARD' ]
+if ~isfield(Cfg, 'enabledKeys'), Cfg.enabledKeys = []; else end;
+if ~isfield(Cfg, 'specialKeys'), Cfg.specialKeys = []; else end;
+if ~isfield(Cfg.specialKeys, 'quitExperiment')
+    if ispc
+        Cfg.specialKeys.quitExperiment = 81; %q on a windows keyboard
+    else
+        Cfg.specialKeys.quitExperiment = 20; %q on a Mac keyboard
+    end
+end
+if ~isfield(Cfg.specialKeys, 'pauseExperiment')
+    if ispc
+        Cfg.specialKeys.quitExperiment = 80; %p on a windows keyboard
+    else
+        Cfg.specialKeys.pauseExperiment = 19;%p on a Mac keyboard
+    end
+end
+if ~isfield(Cfg.specialKeys, 'startExperiment'), Cfg.specialKeys.startExperiment = 'MOUSE'; else end
+if ~isfield(Cfg.specialKeys, 'endExperiment'), Cfg.specialKeys.endExperiment = 'MOUSE'; else end
 if ~isfield(Cfg, 'plotVOT'), Cfg.plotVOT = 0; else end;
+
 if ~isfield(Cfg, 'digitalInputDevice'), Cfg.digitalInputDevice = 'NONE'; else end; %[ {'NONE'}|'PARALLEL'|'NIDAQ2' ]
-if ~isfield(Cfg, 'digitalOutputDevice'), Cfg.digitalOutputDevice = 'NONE'; else end; %[ {'NONE'}|'PARALLEL'|'NIDAQ2' ]
+if ~isfield(Cfg, 'digitalOutputDevice'), Cfg.digitalOutputDevice = 'NONE'; else end; %[ {'NONE'}|'PARALLEL'|'NIDAQ2'|'PARALLEL32' ]
 if ~isfield(Cfg, 'issueTriggers'), Cfg.issueTriggers = 0; else end; %[{0}|1]
+if ~isfield(Cfg, 'issueDebugTriggers'), Cfg.issueDebugTriggers = 0; else end
 if ~isfield(Cfg, 'validTriggerValues'), Cfg.validTriggerValues = []; else end; %[{[]}, vectorOfValues] %[] means all valid
 if ~isfield(Cfg, 'synchToScanner'), Cfg.synchToScanner = 0; else end; %[{0}|1]
 if ~isfield(Cfg, 'ScannerSynchShowDefaultMessage'), Cfg.ScannerSynchShowDefaultMessage = 1; else end; %[0|{1}]
@@ -340,7 +394,7 @@ Cfg.trialFileName = trialFileName;%'test.stm';
 Cfg.currentTrialNumber = 0;
 
 
-%try
+try
     %     Normally, only the statements between the TRY and CATCH are executed.
     %     However, if an error occurs while executing any of the statements, the
     %     error is captured into LASTERR and the statements between the CATCH
@@ -391,8 +445,6 @@ Cfg.currentTrialNumber = 0;
     hASFXFLIP = @ASF_xFlip; %#ok<NASGU>
     
     
-    
-    
     %--------------------------------------------------------------------------
     %INSTRUCTION TRIAL (BETA STADIUM)
     %--------------------------------------------------------------------------
@@ -402,8 +454,6 @@ Cfg.currentTrialNumber = 0;
             INSTRUCTTRIAL(windowPtr, Cfg, Stimuli);
         end
     end
-    
-    
     
     
     %SYNCHRONIZATION TO MR SCANNER
@@ -455,16 +505,19 @@ Cfg.currentTrialNumber = 0;
         if i == 1
             TrialInfo = repmat(this_TrialInfo, [1, Cfg.nTrials]);
         end
+        
         %CONSIDER ADDING A CHECK HERE WHETHER ALL FIELDS IN TRIALINFO EXIST
         %ESPECIALLY PROGRAMMERS OF PLUGIN FNCTIONS MAY FORGET SOMETHING
         %check_trialinfo(TrialInfo(i));
         TrialInfo(i) = this_TrialInfo;
         nResponses = length(TrialInfo(i).Response.RT);
         if nResponses == 0
-            fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n', fix(TrialInfo(i).Response.RT), TrialInfo(i).Response.key, trial(i).correctResponse)
+            fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n',...
+                fix(TrialInfo(i).Response.RT), TrialInfo(i).Response.key, trial(i).correctResponse);
         else
             for iResponse = 1:nResponses
-                fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n', fix(TrialInfo(i).Response.RT(iResponse)), TrialInfo(i).Response.key(iResponse), trial(i).correctResponse);
+                fprintf(1, 'RT: %4d ms, KEY: %4d, CORRECT: %4d\n',...
+                    fix(TrialInfo(i).Response.RT(iResponse)), TrialInfo(i).Response.key(iResponse), trial(i).correctResponse);
             end
         end
         
@@ -487,7 +540,8 @@ Cfg.currentTrialNumber = 0;
             
             %OLDER MATLAB VERSIONS CANNOT HANDLE THIS
             %[~, ~, keyCode] = KbCheck;
-            [dummy1, dummy2, keyCode] = KbCheck;
+            %THIS IS WHY WE ARE USING THIS LESS ELEGANT METHOD FOR A WHILE
+            [dummy1, dummy2, keyCode] = KbCheck; %#ok<ASGLU>
             % if spacebar was pressed stop display
             if keyCode(Cfg.Eyetracking.stopkey)
                 break;
@@ -541,22 +595,28 @@ Cfg.currentTrialNumber = 0;
         timing_diagnosis(ExpInfo)
     end
     
-% catch ME
-%     display(ME)
-%     display(ME.message)
-%     %EMERGENCY SAVE DATA
-%     ExpInfo.Cfg = Cfg;
-%     ExpInfo.TrialInfo = TrialInfo;
-%     fprintf('TRYING TO SAVE THE DATA. IT MAY BE INCOMPLETE! ...');
-%     cmd = sprintf('save %s ExpInfo', expName);
-%     eval(cmd)
-%     fprintf(1, 'DONE.\n')
-%     
-%     %     % catch error
-%     Cfg = ASF_PTBExit(windowPtr, Cfg, 1);
-%     
-%     %     PTBCatchError
-% end % try ... catch %
+catch ME
+    display(ME)
+    display(ME.message)
+    %EMERGENCY SAVE DATA
+    ExpInfo.Cfg = Cfg;
+    if exist('TrialInfo', 'var') 
+        ExpInfo.TrialInfo = TrialInfo;
+        fprintf('TRYING TO SAVE THE DATA. IT MAY BE INCOMPLETE! ...');
+        cmd = sprintf('save %s ExpInfo', expName);
+        eval(cmd)
+        fprintf(1, 'DONE.\n');
+    end
+
+    if exist('windowPtr', 'var')
+        %     % catch error
+        Cfg = ASF_PTBExit(windowPtr, Cfg, 1);
+    else
+        sca
+    end
+    
+    %     PTBCatchError
+end % try ... catch %
 
 
 
@@ -567,9 +627,9 @@ return
 function [ExpInfo, Cfg, trial, windowPtr, Stimuli] = ASFInit(Cfg, expName)
 errorFlag = 0;
 
-fprintf(1, '***********************\n');
+fprintf(1, '*************************\n');
 fprintf(1, '*** ASF VERSION %5.3f ***\n', Cfg.ASFVersion);
-fprintf(1, '***********************\n');
+fprintf(1, '*************************\n');
 
 %CHECK WHETHER INPUT FILES EXIST
 fprintf(1, 'CHECKING FOR %s ... ', Cfg.stimNames);
@@ -580,8 +640,13 @@ if exist(Cfg.stimNames, 'file') == 2
     while(~feof(fid))
         aLine = fgetl(fid);
         fprintf('Searching for %s ...', aLine);
+        %replace \ with / for nonwindows OSs
+        if ~ispc
+            aLine(strfind(aLine, '\')) = '/';
+        end
+            
         if exist(aLine, 'file')
-            fprintf(1, 'OK.\n')
+            fprintf(1, 'OK.\n');
         else
             fclose(fid);
             fprintf(1, ' FILE MISSING. ABORT.\n');
@@ -634,8 +699,16 @@ switch Cfg.Sound.soundMethod
         if ~isfield(Cfg.Sound, 'nCaptureDevices'), Cfg.Sound.nCaptureDevices = 0; else end
         if Cfg.Sound.nPlaybackDevices > 0
             Dev = PsychPortAudio('GetDevices');
-            idxPlaybackDevs = find([Dev.NrOutputChannels]);
-            playbackDevs = [Dev(idxPlaybackDevs).DeviceIndex];
+            switch computer
+                case 'MACI64'
+                    idxPlaybackDevs = find(strcmp({Dev.DeviceName}, 'Built-in Output'));
+                    playbackDevs = [Dev(idxPlaybackDevs).DeviceIndex];
+                otherwise
+                    idxPlaybackDevs = find([Dev.NrOutputChannels]);
+                    playbackDevs = [Dev(idxPlaybackDevs).DeviceIndex];
+
+            end
+                    
             if length(playbackDevs) < Cfg.Sound.nPlaybackDevices
                 error('Insufficient number of available audio devices')
             end
@@ -709,14 +782,21 @@ fprintf(1, 'DONE\n');
 %FOR INPUT
 if Cfg.synchToScanner
     switch Cfg.synchToScannerPort
+        case 'REGENSBURG64'
+            Cfg.hardware.scannerUREG = io64();
+            [triggerNo, triggerList]=checkTriggerSignal64(1, 2, Cfg.hardware.scannerUREG);
+            %ADD ERROR CHECKING
+
         case 'PARALLEL'
             Cfg = InitParallelPortInput(Cfg);
+            
         case 'SERIAL'
             % WE SHOULD CONSIDER THIS
             % Cfg = InitSerialPortInput(Cfg);
             % define this function
             % DO NOTHING, we initialize it
             % before in the InitResponseDevice
+            
         case 'SIMULATE'
             %NO SPECIFIC ACTION DEFINED
             
@@ -786,7 +866,7 @@ end
 [trial, ExpInfo.factorinfo, errorFlag] = ASF_readTrialDefs(Cfg.trialFileName, Cfg);
 if errorFlag
     ASF_PTBExit(windowPtr, Cfg, errorFlag)
-    error('PROGRAM ABORTED')
+    error('PROGRAM ABORTED due to problems reading the trd file')
 end
 
 %CHECK IF ANY PAGENUMBER IN TRIALDEFS EXCEEDS THE HIGHES POSSIBLE FRAME
@@ -799,7 +879,7 @@ for iTrial = 1:length(trial)
     end
     if any(trial(iTrial).pageNumber > Cfg.frameCounter)
         fprintf('Error. Trial %3d contains a reference to a non-existing stimulus (pageNumber). Max is %d.\n', iTrial, Cfg.frameCounter);
-        fprintf(1, 'pageNumber = [ ')
+        fprintf(1, 'pageNumber = [ ');
         fprintf(1, '%d ', trial(iTrial).pageNumber);
         fprintf(']\n');
         errorFlag = 1;
@@ -811,10 +891,17 @@ if errorFlag
 end
 
 %GET READY
-Screen('DrawText', windowPtr, '... press mouse button to begin ...', 50, 545);
-Screen('Flip', windowPtr);
-ASF_waitForMousePressBenign(inf);
-Screen('Flip', windowPtr);
+switch Cfg.specialKeys.startExperiment
+    case 'MOUSE'
+        Screen('DrawText', windowPtr, '... press mouse button to begin ...', 50, 545);
+        Screen('Flip', windowPtr);
+        ASF_waitForMousePressBenign(inf);
+    case 'RESPONSEDEVICE'
+        Screen('DrawText', windowPtr, '... press any valid response key or button to begin ...', 50, 545);
+        Screen('Flip', windowPtr);
+        ASF_waitForResponse(Cfg, inf)
+        Screen('Flip', windowPtr);
+end
 WaitSecs(1);
 
 %% PTBInit
@@ -852,24 +939,32 @@ if(~isfield(Cfg.Screen, 'xDimCm')), Cfg.Screen.xDimCm = 33; end %DELL M70
 if(~isfield(Cfg.Screen, 'yDimCm')), Cfg.Screen.yDimCm = 20.625; end %DELL M70
 if(~isfield(Cfg.Screen, 'distanceCm')), Cfg.Screen.distanceCm = 45; end %DELL M70
 
+%FORCE 0Hz on Mac whatever user requested
+switch OSName
+    case 'OSX'
+        Cfg.Screen.Resolution.hz = 0;
+end
 
 windowPtr = [];
 %CHECK WHETHER DATA FILE ALREADY EXISTS
 Cfg.version = []; %VERSION OUTPUT WILL BE REMOVED FROM fileparts
-[Cfg.pathstr, Cfg.name, Cfg.ext] = fileparts(expName);
-filename = fullfile(Cfg.pathstr, [Cfg.name, '.mat']);
-if exist(filename, 'file') == 2
-    msg = sprintf('File %s already exists. Overwrite?', filename);
-    ButtonName = questdlg(msg, 'Warning', 'Yes','No','No');
-    if strcmp(ButtonName, 'No')
-        fprintf('User did not want to overwrite %s.\n', filename);
-        %trialdef = [];
-        error('PTBInit(). USER ABORT: User did not want to overwrite %s.\n', filename)
-    else
-        fprintf('User OKed overwriting %s.\n', filename);
+if isempty(expName)
+    fprintf(2, 'EMPTY expName RESULTS WILL NOT BE SAVED. \n');
+else
+    [Cfg.pathstr, Cfg.name, Cfg.ext] = fileparts(expName);
+    filename = fullfile(Cfg.pathstr, [Cfg.name, '.mat']);
+    if exist(filename, 'file') == 2
+        msg = sprintf('File %s already exists. Overwrite?', filename);
+        ButtonName = questdlg(msg, 'Warning', 'Yes','No','No');
+        if strcmp(ButtonName, 'No')
+            fprintf('User did not want to overwrite %s.\n', filename);
+            %trialdef = [];
+            error('PTBInit(). USER ABORT: User did not want to overwrite %s.\n', filename)
+        else
+            fprintf('User OKed overwriting %s.\n', filename);
+        end
     end
 end
-
 % get screen
 screens = Screen('Screens'); %RETURNS A LIST OF AVAIALBLE DISPLAYS
 screenNumber = max(screens); %#ok<NASGU> %PICK THE ONE WITH THE HIGEST NUMBER
@@ -930,7 +1025,7 @@ fprintf(1, '********** OPENING ONSCREEN WINDOW AND PERFORMING SOME DIAGNOSTICS *
 fprintf(1, '*****************************************************************************\n');
 
 if Cfg.Screen.useDefaultResolution
-    [windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, windowPtr, Cfg.Screen.rect);%[windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, Cfg.Screen.color, Cfg.Screen.rect);
+    [windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, Cfg.Screen.color, Cfg.Screen.rect);%[windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, Cfg.Screen.color, Cfg.Screen.rect);
 else
     [windowPtr, Cfg.Screen.rect] = Screen('OpenWindow', screenNumber, Cfg.Screen.color, Cfg.Screen.rect, Cfg.Screen.Resolution.pixelSize, Cfg.Screen.numberOfBuffers);
 end
@@ -946,27 +1041,27 @@ fprintf(1, '********************************************************************
 
 Cfg.Screen.FrameRate = Screen('NominalFrameRate', windowPtr);
 [Cfg.Screen.monitorFlipInterval, Cfg.Screen.GetFlipInterval.nrValidSamples, Cfg.Screen.GetFlipInterval.stddev ] = Screen('GetFlipInterval', windowPtr );
-[Cfg.Screen.width, Cfg.Screen.height] = Screen('WindowSize', windowPtr);
+[Cfg.Screen.Resolution.width, Cfg.Screen.Resolution.height] = Screen('WindowSize', windowPtr);
 Cfg.Environment.computer = Screen('Computer');
 Cfg.Environment.version = Screen('Version');
 
 %CENTER OF THE SCREEN
-Cfg.Screen.centerX = Cfg.Screen.width/2;
-Cfg.Screen.centerY = Cfg.Screen.height/2;
+Cfg.Screen.centerX = Cfg.Screen.Resolution.width/2;
+Cfg.Screen.centerY = Cfg.Screen.Resolution.height/2;
 
 
 %DEG VISUAL ANGLE FOR SCREEN
 Cfg.Screen.visualAngleDegX = atan(Cfg.Screen.xDimCm/(2*Cfg.Screen.distanceCm))/pi*180*2;
 Cfg.Screen.visualAngleDegY = atan(Cfg.Screen.yDimCm/(2*Cfg.Screen.distanceCm))/pi*180*2;
 %DEG VISUAL ANGLE PER PIXEL
-Cfg.Screen.visualAngleDegPerPixelX = Cfg.Screen.visualAngleDegX/Cfg.Screen.width;
-Cfg.Screen.visualAngleDegPerPixelY = Cfg.Screen.visualAngleDegY/Cfg.Screen.height;
-Cfg.Screen.visualAnglePixelPerDegX = Cfg.Screen.width/Cfg.Screen.visualAngleDegX;
-Cfg.Screen.visualAnglePixelPerDegY = Cfg.Screen.height/Cfg.Screen.visualAngleDegY;
+Cfg.Screen.visualAngleDegPerPixelX = Cfg.Screen.visualAngleDegX/Cfg.Screen.Resolution.width;
+Cfg.Screen.visualAngleDegPerPixelY = Cfg.Screen.visualAngleDegY/Cfg.Screen.Resolution.height;
+Cfg.Screen.visualAnglePixelPerDegX = Cfg.Screen.Resolution.width/Cfg.Screen.visualAngleDegX;
+Cfg.Screen.visualAnglePixelPerDegY = Cfg.Screen.Resolution.height/Cfg.Screen.visualAngleDegY;
 
 fprintf(1, 'Screen Parameters:\n');
-fprintf(1, ' Width: %5.3f cm, %5d pixels, %5.3f deg [%5.3f deg/pix, %5.3f pix/deg]\n', Cfg.Screen.xDimCm, Cfg.Screen.width, Cfg.Screen.visualAngleDegX, Cfg.Screen.visualAngleDegPerPixelX, Cfg.Screen.visualAnglePixelPerDegX);
-fprintf(1, 'Height: %5.3f cm, %5d pixels, %5.3f deg [%5.3f deg/pix, %5.3f pix/deg]\n', Cfg.Screen.yDimCm, Cfg.Screen.height, Cfg.Screen.visualAngleDegY, Cfg.Screen.visualAngleDegPerPixelY, Cfg.Screen.visualAnglePixelPerDegY);
+fprintf(1, ' Width: %5.3f cm, %5d pixels, %5.3f deg [%5.3f deg/pix, %5.3f pix/deg]\n', Cfg.Screen.xDimCm, Cfg.Screen.Resolution.width, Cfg.Screen.visualAngleDegX, Cfg.Screen.visualAngleDegPerPixelX, Cfg.Screen.visualAnglePixelPerDegX);
+fprintf(1, 'Height: %5.3f cm, %5d pixels, %5.3f deg [%5.3f deg/pix, %5.3f pix/deg]\n', Cfg.Screen.yDimCm, Cfg.Screen.Resolution.height, Cfg.Screen.visualAngleDegY, Cfg.Screen.visualAngleDegPerPixelY, Cfg.Screen.visualAnglePixelPerDegY);
 fprintf(1, 'Width: %d [pxl], height: %d [pxl]\n nominal refresh rate: %5.3f [Hz], actual refresh rate: %5.3f\n', Cfg.Screen.NewResolution.width, Cfg.Screen.NewResolution.height, Cfg.Screen.NewResolution.hz, 1/Cfg.Screen.monitorFlipInterval);
 %pause
 
@@ -1095,6 +1190,26 @@ switch Cfg.responseDevice
           
     case  'KEYBOARD'
         fprintf(1, 'USING KEYBOARD AS RESPONSE DEVICE\n');
+        if isempty(Cfg.enabledKeys)
+            error('Cfg.enabledKeys is empty.\nYou are using the keyboard as a response device without specifying enabled keys.');
+        else
+            %CHECK FOR INCONSISTENCIES WITH PAUSE KEYS (AND ENABLE PAUSE KEYS)
+            if any(ismember(Cfg.enabledKeys, [Cfg.specialKeys.quitExperiment, Cfg.specialKeys.pauseExperiment]))
+                fprintf( 1, 'Cfg.enabledKeys and Cfg.specialKeys show some overlap.\n');
+                fprintf(1, 'Cfg.enabledKeys\n');
+                fprintf(1, '%d ', Cfg.enabledKeys);
+                fprintf(1, '\nCfg.specialKeys\n');
+                display(Cfg.specialKeys)
+                error('Redefine either your set of response keys or the special keys.')
+            else
+                DisableKeysForKbCheck(setdiff(1:256,...
+                    [Cfg.enabledKeys, Cfg.specialKeys.quitExperiment, Cfg.specialKeys.pauseExperiment]));
+                fprintf(1, 'Enabled key-codes:\n');
+                fprintf(1, ' %d', Cfg.enabledKeys);
+                fprintf(1, '\n');
+            end
+        end
+
         
 end
 
@@ -1110,6 +1225,12 @@ Cfg.frameCounter = 0;
 fname_stim = Cfg.stimNames;
 %READ STIMULUS-NAMES
 stimNames  = importdata(fname_stim);
+%REPLACE \ WITH / ON UNIX SYSTEMS
+if isunix
+    for i = 1:numel(stimNames)
+        stimNames{i}(strfind(stimNames{i}, '\'))='/';
+    end
+end
 nStimuli = size(stimNames, 1);
 
 %USE MATLAB'S PROGRESS BAR FOR FEEDBACK
@@ -1183,7 +1304,9 @@ if ~isempty(Cfg.readSoundStimuli)
                 fprintf(1, 'OK\n');
                 
                 %READ IMAGE INTO MATRIX
-                Stimuli.CellArray_Sound{iStimulus} = wavread(soundstimnames{iStimulus});
+                Stimuli.CellArray_Sound{iStimulus} = audioread(soundstimnames{iStimulus});
+                %turn into row vector
+                Stimuli.CellArray_Sound{iStimulus} = Stimuli.CellArray_Sound{iStimulus}';
             else
                 %IF FILE DOES NOT EXIST
                 fprintf(1, 'NOT FOUND\n');
@@ -1301,29 +1424,29 @@ Cfg = ASF_sendMessageToEyelink(Cfg, 'TRIALSTART');
 %--------------------------------------------------------------------------
 %CYCLE THROUGH PAGES FOR THIS TRIAL
 atrial.nPages = length(atrial.pageNumber);
-for i = 1:atrial.startRTonPage-1
-    if (i > atrial.nPages)
+for iPage = 1:atrial.startRTonPage-1
+    if (iPage > atrial.nPages)
         break;
     else
         %PUT THE APPROPRIATE TEXTURE ON THE BACK BUFFER
-        Screen('DrawTexture', windowPtr, Stimuli.tex(atrial.pageNumber(i)));
+        Screen('DrawTexture', windowPtr, Stimuli.tex(atrial.pageNumber(iPage)));
         
         %PRESERVE BACK BUFFER IF THIS TEXTURE IS TO BE SHOWN
         %AGAIN AT THE NEXT FLIP
-        bPreserveBackBuffer = atrial.pageDuration(i) > 1;
+        bPreserveBackBuffer = atrial.pageDuration(iPage) > 1;
         
         %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT IN THE
         %BACKBUFFER IN CASE THE SAME IMAGE IS TO BE FLIPPED AGAIN TO THE SCREEN
         [VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos] =...
-            ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(i)),...
+            ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(iPage)),...
             Cfg, bPreserveBackBuffer);
         
         %SET TRIGGER (PARALLEL PORT AND EYELINK)
-        ASF_setTrigger(Cfg, atrial.pageNumber(i));
+        ASF_setTrigger(Cfg, atrial.pageNumber(iPage));
         
         
         %LOG WHEN THIS PAGE APPEARED
-        timing(i, 1:6) = [atrial.pageDuration(i), VBLTimestamp,...
+        timing(iPage, 1:6) = [atrial.pageDuration(iPage), VBLTimestamp,...
             StimulusOnsetTime FlipTimestamp Missed Beampos];
         
         
@@ -1334,7 +1457,7 @@ for i = 1:atrial.startRTonPage-1
         %NOT ALL GRAPHICS CARDS CAN DO THIS. FOR CARDS WITHOUT AUXILIARY
         %BACKBUFFERS WE COPY THE TEXTURE EXPLICITLY ON THE BACKBUFFER AFTER
         %IT HAS BEEN DESTROYED BY FLIPPING
-        nFlips = atrial.pageDuration(i) - 1; %WE ALREADY FLIPPED ONCE
+        nFlips = atrial.pageDuration(iPage) - 1; %WE ALREADY FLIPPED ONCE
         for FlipNumber = 1:nFlips
             %PRESERVE BACK BUFFER IF THIS TEXTURE IS TO BE SHOWN
             %AGAIN AT THE NEXT FLIP
@@ -1343,7 +1466,7 @@ for i = 1:atrial.startRTonPage-1
             %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT
             %IN THE BACKBUFFER IN CASE THE SAME IMAGE IS TO BE FLIPPED
             %AGAIN TO THE SCREEN
-            ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(i)),...
+            ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(iPage)),...
                 Cfg, bPreserveBackBuffer);
         end
     end
@@ -1358,13 +1481,13 @@ end
 %--------------------------------------------------------------------------
 %SPECIAL TREATMENT FOR THE DISPLAY PAGES ON WHICH WE ALLOW REACTIONS
 
-for i = atrial.startRTonPage:atrial.endRTonPage
-    if (i > atrial.nPages)
+for iPage = atrial.startRTonPage:atrial.endRTonPage
+    if (iPage > atrial.nPages)
         break;
     else
         
         %PUT THE APPROPRIATE TEXTURE ON THE BACK BUFFER
-        Screen('DrawTexture', windowPtr, Stimuli.tex(atrial.pageNumber(i)));
+        Screen('DrawTexture', windowPtr, Stimuli.tex(atrial.pageNumber(iPage)));
         
         %DO NOT PUT THIS PAGE AGAIN ON THE BACKBUFFER, WE WILL WAIT IT OUT
         %USING THE TIMER NOT FLIPPING
@@ -1374,22 +1497,22 @@ for i = atrial.startRTonPage:atrial.endRTonPage
         %IN THE BACKBUFFER IN CASE THE SAME IMAGE IS TO BE FLIPPED
         %AGAIN TO THE SCREEN
         [VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos] =...
-            ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(i)),...
+            ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(iPage)),...
             Cfg, bPreserveBackBuffer);
         
         %SET TRIGGER
-        ASF_setTrigger(Cfg, atrial.pageNumber(i));
+        ASF_setTrigger(Cfg, atrial.pageNumber(iPage));
         
-        if i == atrial.startRTonPage
+        if iPage == atrial.startRTonPage
             StartRTMeasurement = VBLTimestamp;
         end
         
         %STORE TIME OF PAGE FLIPPING FOR DIAGNOSTIC PURPOSES
-        timing(i, 1:6) = [atrial.pageDuration(i), VBLTimestamp,...
+        timing(iPage, 1:6) = [atrial.pageDuration(iPage), VBLTimestamp,...
             StimulusOnsetTime, FlipTimestamp, Missed, Beampos];
         
         pageDuration_in_sec =...
-            atrial.pageDuration(i)*Cfg.Screen.monitorFlipInterval;
+            atrial.pageDuration(iPage)*Cfg.Screen.monitorFlipInterval;
         
         [x, y, buttons, t0, t1] =...
             ASF_waitForResponse(Cfg, pageDuration_in_sec - toleranceSec);
@@ -1429,34 +1552,34 @@ end
 % (AFTER RESPONSE HAS BEEN GIVEN) SAME AS PHASE 2
 %--------------------------------------------------------------------------
 %OTHER PICS
-for i = atrial.endRTonPage+1:nPages
-    if (i > atrial.nPages)
+for iPage = atrial.endRTonPage+1:nPages
+    if (iPage > atrial.nPages)
         break;
     else
         %PUT THE APPROPRIATE TEXTURE ON THE BACK BUFFER
-        Screen('DrawTexture', windowPtr, Stimuli.tex(atrial.pageNumber(i)));
+        Screen('DrawTexture', windowPtr, Stimuli.tex(atrial.pageNumber(iPage)));
         
         %PRESERVE BACK BUFFER IF THIS TEXTURE IS TO BE SHOWN
         %AGAIN AT THE NEXT FLIP
-        bPreserveBackBuffer = atrial.pageDuration(i) > 1;
+        bPreserveBackBuffer = atrial.pageDuration(iPage) > 1;
         
         %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT
         %IN THE BACKBUFFER IN CASE THE SAME IMAGE IS TO BE FLIPPED
         %AGAIN TO THE SCREEN
         [VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos] =...
-            ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(i)),...
+            ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(iPage)),...
             Cfg, bPreserveBackBuffer);
         
         %SET TRIGGER (PARALLEL PORT AND EYELINK)
-        ASF_setTrigger(Cfg, atrial.pageNumber(i));
+        ASF_setTrigger(Cfg, atrial.pageNumber(iPage));
         
         
         %LOG WHEN THIS PAGE APPEARED
-        timing(i, 1:6) = [atrial.pageDuration(i), VBLTimestamp,...
+        timing(iPage, 1:6) = [atrial.pageDuration(iPage), VBLTimestamp,...
             StimulusOnsetTime FlipTimestamp Missed Beampos];
         
         %WAIT OUT STIMULUS DURATION IN FRAMES.
-        nFlips = atrial.pageDuration(i) - 1; %WE ALREADY FLIPPED ONCE
+        nFlips = atrial.pageDuration(iPage) - 1; %WE ALREADY FLIPPED ONCE
         for FlipNumber = 1:nFlips
             %PRESERVE BACK BUFFER IF THIS TEXTURE IS TO BE SHOWN
             %AGAIN AT THE NEXT FLIP
@@ -1465,7 +1588,7 @@ for i = atrial.endRTonPage+1:nPages
             %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT
             %IN THE BACKBUFFER IN CASE THE SAME IMAGE IS TO BE FLIPPED
             %AGAIN TO THE SCREEN
-            ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(i)),...
+            ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(iPage)),...
                 Cfg, bPreserveBackBuffer);
         end
     end
@@ -1602,36 +1725,36 @@ TrialInfo.tStart = GetSecs - Cfg.experimentStart;
 % TrialInfo.tStart = wakeup - Cfg.experimentStart;
 
 %CYCLE THROUGH PAGES FOR THIS TRIAL
-for i = 1:nPages
+for iPage = 1:nPages
     %PUT THE APPROPRIATE TEXTURE ON THE BACK BUFFER
-    Screen('DrawTexture', windowPtr, Stimuli.tex(atrial.pageNumber(i)));
+    Screen('DrawTexture', windowPtr, Stimuli.tex(atrial.pageNumber(iPage)));
     
     
     %PRESERVE BACK BUFFER IF THIS TEXTURE S TO BE SHOW AGAIN AT THE NEXT FLIP
-    bPreserveBackBuffer = atrial.pageDuration(i) > 1;
+    bPreserveBackBuffer = atrial.pageDuration(iPage) > 1;
     
     %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT IN THE
     %BACKBUFFER IN CASE THE SAME IMAGE IS TO BE FLIPPED AGAIN TO THE SCREEN
-    [VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos] = ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(i)), Cfg, bPreserveBackBuffer);
+    [VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos] = ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(iPage)), Cfg, bPreserveBackBuffer);
     
-    if i == atrial.startRTonPage
+    if iPage == atrial.startRTonPage
         StartRTMeasurement = VBLTimestamp;
         
         %VOICEKEY
         record(Cfg.audio.recorder, 2);       %RECORD for two seconds
         
     end
-    timing(i, 1:6) = [atrial.pageDuration(i), VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos];
+    timing(iPage, 1:6) = [atrial.pageDuration(iPage), VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos];
     
     %WAIT OUT STIMULUS DURATION IN FRAMES
-    nFlips = atrial.pageDuration(i) - 1; %WE ALREADY FLIPPED ONCE
+    nFlips = atrial.pageDuration(iPage) - 1; %WE ALREADY FLIPPED ONCE
     for FlipNumber = 1:nFlips
         %PRESERVE BACK BUFFER IF THIS TEXTURE IS TO BE SHOW AGAIN AT THE NEXT FLIP
         bPreserveBackBuffer = FlipNumber < nFlips;
         
         %FLIP THE CONTENT OF THIS PAGE TO THE DISPLAY AND PRESERVE IT IN THE
         %BACKBUFFER IN CASE THE SAME IMAGE IS TO BE FLIPPED AGAIN TO THE SCREEN
-        ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(i)), Cfg, bPreserveBackBuffer);
+        ASF_xFlip(windowPtr, Stimuli.tex(atrial.pageNumber(iPage)), Cfg, bPreserveBackBuffer);
     end
 end
 
@@ -2108,7 +2231,26 @@ switch Cfg.digitalOutputDevice
         Cfg = InitNidaqOutput(Cfg);
     case 'ARDUINO'
         Cfg = InitArduinoOutput(Cfg);
+    case 'SERIAL'
+        Cfg = InitSerialOutput(Cfg);
+    case 'PARALLEL32'
+        Cfg = InitParallelPortOutput32bit(Cfg);
 end
+
+%% InitParallelPortOutput
+function Cfg = InitParallelPortOutput32bit(Cfg)
+if ~isfield(Cfg, 'hardware'), Cfg.hardware = []; else end
+if ~isfield(Cfg.hardware, 'parallel'), Cfg.hardware.parallel = []; else end
+if ~isfield(Cfg.hardware.parallel, 'ON'), Cfg.hardware.parallel.ON = 0; Cfg.hardware.parallel.OFF = 1;else end
+
+fprintf(1, 'INITIALIZING PARALLEL PORT ...\n');
+if exist('lptwrite')
+    fprintf(1, '32 bit lptwrite present. Assuming adress 888 (x378)\n');
+else
+    error('Cannot find lptwrite.mexw32');
+end
+fprintf(1, 'DONE\n');
+
 
 %% InitArduino
 function Cfg = InitArduinoOutput(Cfg)
@@ -2195,6 +2337,19 @@ Cfg.hardware.DigitalOutput.dioinfos = getvalue(Cfg.hardware.DigitalOutput.mydio)
 ASF_setTrigger(Cfg, 0);
 
 fprintf(1, 'DONE\n');
+
+function Cfg = InitSerialOutput(Cfg)
+fprintf('INITIALIZING SOME OTHER SERIAL OUTPUT BOARD ON %s\n', Cfg.hardware.Serial.comPort.port);
+
+%    s = serial('COM4', 'BaudRate', 9600);
+
+Cfg.hardware.Serial.hSerial =...
+    serial(Cfg.hardware.Serial.comPort.port,...
+    'BaudRate', Cfg.hardware.Serial.comPort.baudRate);
+fopen(Cfg.hardware.Serial.hSerial);
+Cfg.hardware.Serial.hSerial
+Cfg.hardware.Serial.useSerialOut = 1;
+
 
 
 %% InitParallelPortInput

@@ -15,10 +15,20 @@ end
 
 switch errorFlag
     case 0
-        Screen('DrawText', windowPtr, '... press mouse button ...', 10, 70);
-        Screen('Flip', windowPtr);
-        %WaitForMousePress(5);
-        ASF_waitForMousePressBenign(5);
+        switch Cfg.specialKeys.endExperiment
+            case 'MOUSE'
+                Screen('DrawText', windowPtr, '... press mouse button ...', 10, 70);
+                Screen('Flip', windowPtr);
+                ASF_waitForMousePressBenign(5);
+            
+            case 'RESPONSEDEVICE'
+                Screen('DrawText', windowPtr, '... press any valid response key or button to end ...', 10, 70);
+                Screen('Flip', windowPtr);
+                ASF_waitForResponse(Cfg, 5)
+                Screen('Flip', windowPtr);
+
+            case 'NONE'
+        end
         Screen('DrawText', windowPtr, '... THANKS ...', 10, 70, 255);
         Screen('Flip', windowPtr);
         WaitSecs(1);
