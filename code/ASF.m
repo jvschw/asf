@@ -716,9 +716,9 @@ fprintf(1, 'DONE\n');
 %FOR INPUT
 if Cfg.synchToScanner
     switch Cfg.synchToScannerPort
-        case 'REGENSBURG64'
-            Cfg.hardware.scannerUREG = io64();
-            [triggerNo, triggerList]=checkTriggerSignal64(1, 2, Cfg.hardware.scannerUREG);
+        case 'IO64'
+            Cfg.hardware.scannerIO64 = io64();
+            [triggerNo, triggerList] = checkTriggerSignal64(1, 2, Cfg.hardware.scannerIO64);
             %ADD ERROR CHECKING
 
         case 'PARALLEL'
