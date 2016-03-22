@@ -1,0 +1,46 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: stimuli - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOKUME~1\ANGELI~1\LOKALE~1\Temp\RSP18.tmp" with contents
+[
+/nologo /MLd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /FR"Debug/" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\Dokumente und Einstellungen\Angelika Lingnau\Eigene Dateien\Uni\Diverses\CProgs\stimuli_arrows\calc_stim.c"
+"C:\Dokumente und Einstellungen\Angelika Lingnau\Eigene Dateien\Uni\Diverses\CProgs\stimuli_arrows\read_stimdefs.c"
+"C:\Dokumente und Einstellungen\Angelika Lingnau\Eigene Dateien\Uni\Diverses\CProgs\stimuli_arrows\SaveBitmap.c"
+"C:\Dokumente und Einstellungen\Angelika Lingnau\Eigene Dateien\Uni\Diverses\CProgs\stimuli_arrows\stimuli.c"
+]
+Creating command line "cl.exe @C:\DOKUME~1\ANGELI~1\LOKALE~1\Temp\RSP18.tmp" 
+Creating temporary file "C:\DOKUME~1\ANGELI~1\LOKALE~1\Temp\RSP19.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /pdb:none /debug /machine:I386 /out:"Debug/stimuli.exe" 
+".\Debug\calc_stim.obj"
+".\Debug\DibHelp.obj"
+".\Debug\read_stimdefs.obj"
+".\Debug\SaveBitmap.obj"
+".\Debug\stimuli.obj"
+]
+Creating command line "link.exe @C:\DOKUME~1\ANGELI~1\LOKALE~1\Temp\RSP19.tmp"
+<h3>Output Window</h3>
+Compiling...
+calc_stim.c
+read_stimdefs.c
+SaveBitmap.c
+stimuli.c
+Generating Code...
+Linking...
+Creating command line "bscmake.exe /nologo /o"Debug/stimuli.bsc"  ".\Debug\calc_stim.sbr" ".\Debug\DibHelp.sbr" ".\Debug\read_stimdefs.sbr" ".\Debug\SaveBitmap.sbr" ".\Debug\stimuli.sbr""
+Creating browse info file...
+<h3>Output Window</h3>
+
+
+
+<h3>Results</h3>
+stimuli.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>
