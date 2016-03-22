@@ -1,5 +1,6 @@
 function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 % function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
+% Testing how git really works
 %-------------------------------------------------------------
 % A SIMPLE
 % MULTI PURPOSE PLAYBACK MACHINE FOR PSYCHOPHYSICS EXPERIMENTS
