@@ -2,11 +2,12 @@ function codes = ASF_encode(faccombinations, factorsandlevels)
 %function codes = ASF_encode(thisfaccombination, factorsandlevels)
 %Suppose you have a 2 by 4 by 2 design with the first factor changing slowest
 %and the last factor changing fastest.
-%This yields 16 conditions (2*4*2)
-%if levels start counting from 0 %then level 1 3 1 is the highest
-%
-%encoding gives unique codes that can be used for EEG triggers or efficient coding
-%use ASF_decode.m to retrieve factorial combinations from a code
+%This design contains 16 conditions (2*4*2).
+%If levels start counting from 0 then levels go from
+%0 0 0 to 1 3 1. Each combination of factor levels is mapped onto a unique
+%integer number that can be used as markers in logfiles or foe example for 
+%EEG triggers.
+%Use ASF_decode.m to retrieve factorial combinations from a code
 %Jens.Schwarzbach@unitn.it, 20060627
 %
 %SEE ALSO: ASF_decode

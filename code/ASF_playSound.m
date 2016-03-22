@@ -22,9 +22,9 @@ switch Cfg.Sound.soundMethod
     case 'audioplayer'
         %IGNORES when ARGUMENT
         %ASSUMES THAT
-        %Cfg.Sound.pahandle = audioplayer(Cfg.SoundStim.y, Cfg.SoundStim.frequSampling);
+        %Cfg.Sound.playbackHandle = audioplayer(Cfg.SoundStim.y, Cfg.SoundStim.frequSampling);
         %HAS ALREADY HAPPENED
-        play(Cfg.Sound.pahandle); %change to playbackHandle?
+        play(Cfg.Sound.playbackHandle(playBackDevice)); %change to playbackHandle?
 
     case 'wavplay'
         %IGNORES when ARGUMENT

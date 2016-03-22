@@ -1,8 +1,8 @@
 %function [ VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos ] = ASF_xFlip(windowPtr, texture, Cfg, bPreserveBackBuffer)
 %% ASF_xFlip (extended Screen('Flip'))
-function [ VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos ] = ASF_xFlip(windowPtr, texture, Cfg, bPreserveBackBuffer)
+function [ VBLTimestamp, StimulusOnsetTime, FlipTimestamp, Missed, Beampos, bPauseFlag ] = ASF_xFlip(windowPtr, texture, Cfg, bPreserveBackBuffer)
 persistent frameCounter
-
+bPauseFlag = 0;
 % persistent flipval
 %
 % if isempty( flipval )
@@ -12,14 +12,14 @@ persistent frameCounter
 
 switch bPreserveBackBuffer
     case 0 %DESTRUCTIVE FLIP
-        [VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos] = Screen('Flip', windowPtr);
+        [VBLTimestamp, StimulusOnsetTime, FlipTimestamp, Missed, Beampos] = Screen('Flip', windowPtr);
     case 1 %NONDESTRUCTIVE FLIP
         if Cfg.Screen.useBackBuffer
             %FOR A MACHINE THAT HAS AUXILIARY BACKBUFFERS
-            [VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos] = Screen('Flip', windowPtr, [], 1);
+            [VBLTimestamp, StimulusOnsetTime, FlipTimestamp, Missed, Beampos] = Screen('Flip', windowPtr, [], 1);
         else
             %FOR A MACHINE THAT HAS NO BACKBUFFERS
-            [VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos] = Screen('Flip', windowPtr);
+            [VBLTimestamp, StimulusOnsetTime, FlipTimestamp, Missed, Beampos] = Screen('Flip', windowPtr);
             Screen('DrawTexture', windowPtr, texture);
         end
 end
@@ -40,45 +40,33 @@ if Cfg.video.writeVideo
 end
 
 %CHECK IF USER WANTS TO QUIT
-[bUpDn, T, keyCodeKbCheck] = KbCheck;
+[bUpDn, ~, keyCodeKbCheck] = KbCheck;
 if bUpDn % break out of loop
     thisKey = find(keyCodeKbCheck);
-%     switch Cfg.Environment.computer.windows
-%         case 0
-%             %NONWINDOWS
-%             if thisKey == 20
-%                 bAbort = 1;
-%             end
-%         case 1
-%             %WINDOWS
-%             if thisKey == 81
-%                 bAbort = 1;
-%             end
-%     end
-    if ismember(find(keyCodeKbCheck), [20, 81]) %quit press q 
+    if ismember(thisKey, Cfg.specialKeys.quitExperiment) %quit press q 
         fprintf(1, 'USER ABORTED PROGRAM\n');
-         
         ASF_PTBExit(windowPtr, Cfg, 1)
         %FORCE AN ERROR
         error('USERABORT')
         %IF TRY/CATCH IS ON THE FOLLOWING LINE CAN BE COMMENTED OUT
         %PTBExit(windowPtr);
     end
-
-    %PAUSE? press p, only tested on windows
-    if ismember(find(keyCodeKbCheck), [80])
+    %PAUSE? press p, only tested on mac
+    if ismember(thisKey, Cfg.specialKeys.pauseExperiment)
         %IF USING fNIRS, PAUSE DATA ACQUISITION
         ASF_setTrigger(Cfg, 64) %ISS IMAGENT DATA ACQUISITION TRIGGER
         fprintf(1, 'USER PAUSED PROGRAM\n');
         Screen('Flip', windowPtr);
-        Screen('DrawText', windowPtr, 'PAUSE - PRESS ANY KEY TO CONTINUE', 20, Cfg.Screen.centerY);
+        Screen('DrawText', windowPtr, 'PAUSE - PRESS SPACE TO CONTINUE', 20, Cfg.Screen.centerY);
         Screen('Flip', windowPtr);
+        bPauseFlag = 1;
         pause
         FlushEvents;
         %Screen('DrawTexture', windowPtr, texture);
         %IF USING fNIRS, REENABLE DATA ACQUISITION
-        [VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos] = Screen('Flip', windowPtr);
+        [VBLTimestamp, StimulusOnsetTime, FlipTimestamp, Missed, Beampos] = Screen('Flip', windowPtr);
         ASF_setTrigger(Cfg, 64); %ISS IMAGENT DATA ACQUISITION TRIGGER
+        bPauseFlag = 0;
     end
 
 end

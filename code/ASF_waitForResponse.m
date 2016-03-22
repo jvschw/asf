@@ -17,7 +17,7 @@ switch Cfg.responseDevice
             case 'buttonDown'
                 [x, y, buttons, t0, t1, extraKey] = WaitForMousePress(timeout, Cfg.responseSettings.allowTrialRepeat); %NEW 2nd arg
             otherwise
-                error(sprintf('MOUSE Unknown response type %s', Cfg.responseType));
+                error('MOUSE Unknown response type %s', Cfg.responseType);
         end
         
     case 'LUMINAPARALLEL'
@@ -32,7 +32,7 @@ switch Cfg.responseDevice
             case 'buttonUp'
                 [buttons, t0, t1] = WaitForSerialBoxButtonUp(Cfg, timeout);
             otherwise
-                error(sprintf('LUMINASERIAL Unknown response type %s', Cfg.responseType));
+                error('LUMINASERIAL Unknown response type %s', Cfg.responseType);
         end
 
     case 'KEYBOARD'
@@ -67,7 +67,7 @@ end
 function [buttons, t0, t1] = WaitForVoiceKeyPPA(Cfg, timeout)
 buttons = [0, 0, 0, 0, 0, 1]; %BUTTON 6
 t0 = GetSecs;
-t1 = t0;
+
 % x = NaN; y = NaN;
 % keyCode = NaN;
 
@@ -102,10 +102,10 @@ t1 = GetSecs;
 % fprintf(1, 'Done.\n');
 
 function [keyCode, t0, t1] = WaitForVoiceKey(Cfg, timeout)
-buttons = 0;
+%buttons = 0;
 t0 = GetSecs;
 t1 = t0;
-x = NaN; y = NaN;
+%x = NaN; y = NaN;
 keyCode = NaN;
 
 %VOICEKEY
@@ -191,7 +191,7 @@ for i = 1:nFiles
     end
     fname = d(i).name;
     %    [y, fs, nbits, opts] =   wavread(fname, [22050, 88000]);
-    [y, fs, nbits, opts] =   wavread(fname);
+    [y, fs, nbits, opts] =   wavread(fname); %#ok<ASGLU>
 
     t = (0:length(y)-1)/fs;
     
@@ -455,16 +455,23 @@ buttonStateChanged = 0;
 persistent oldButtons;
 
 if isempty(oldButtons)
-     oldButtons = [0, 0, 0];
+    oldButtons = zeros(1, 3);
 end
 %while (~any(buttons) && ((t1 - t0)<timeout) &&(~keyIsDown)) % wait for press
 
 %LOOP UNTIL
-%THE BUTTON STATE CHANGES
-%TIME EXPIRES
-%A KEY IS PRESSED
+%-THE BUTTON STATE CHANGES
+%-TIME EXPIRES
+%-A KEY IS PRESSED
 while (~buttonStateChanged && ((t1 - t0)<timeout) &&(~keyIsDown)) % wait for press
     [x, y, buttons] = GetMouse;
+    if numel(buttons) > 3
+        buttons = buttons(1:3); %only look at first three buttons
+    else
+        if numel(buttons) < 3
+            buttons(3) = 0;
+        end
+    end
     buttonStateChanged = any(abs(buttons - oldButtons));
     %buttonStateChanged = any((buttons - oldButtons)>0);%ONLY SIGNAL STATE CHANGE IF A NEW BUTTON IS PUSHED (NOT IF ONE IS RELEASED)
     if buttonStateChanged
