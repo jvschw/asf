@@ -1,5 +1,6 @@
 function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 % function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
+% a new test!
 %-------------------------------------------------------------
 % A SIMPLE
 % MULTI PURPOSE PLAYBACK MACHINE FOR PSYCHOPHYSICS EXPERIMENTS
