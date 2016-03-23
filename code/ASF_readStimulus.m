@@ -13,7 +13,7 @@ if(exist(stimName, 'file'))
     %IF FILE EXISTS...
     fprintf(1, 'OK\n');
     
-    [thisDir, thisName, thisExt] = fileparts(stimName);
+    [~, ~, thisExt] = fileparts(stimName);
     thisExt = lower(thisExt);
     switch thisExt
         case {'.bmp', '.jpg', '.png', '.jpeg', '.gif'}
