@@ -13,48 +13,46 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %START, END, PAUSE, ABORT:
 % Cfg.specialKeys.quitExperiment        = [ {20} ]; %Pressing this key ('q' on a Mac) during a page flip will abort the experiment
 % Cfg.specialKeys.pauseExperiment       = [ {19} ]; %Pressing this key ('p' on a Mac) during a page flip will pause and resume the experiment
-% Cfg.specialKeys.startExperiment       = [{'MOUSE'}, 'RESPONSEDEVICE']; %
-% Cfg.specialKeys.endExperiment         = [{'MOUSE'}, 'RESPONSEDEVICE', 'NONE']; %
+% Cfg.specialKeys.startExperiment       = [ {'MOUSE'} | 'RESPONSEDEVICE' ]; %
+% Cfg.specialKeys.endExperiment         = [ {'MOUSE'} | 'RESPONSEDEVICE' | 'NONE' ]; %
 %
 %DISPLAY:
-% Cfg.Screen.skipSyncTests              = [{0} | 1]
-% Cfg.Screen.rect                       = [{[]}, [ulRowStart, ulColStart, ulRowEnd, ulColEnd] ]
+% Cfg.Screen.skipSyncTests              = [ {0} | 1 ]
+% Cfg.Screen.rect                       = [ {[]} | [ulRowStart, ulColStart, ulRowEnd, ulColEnd] ]
 % Cfg.Screen.useBackBuffer              = [ 0 | {1} ]   %USE AUXILIARY BACKBUFFERS FOR PAGE FLIPPING
-% Cfg.Screen.color                      = [{[255, 255, 255]}|[R, G, B]] %DEFAULTS TO WHITE BACKGROUND
-% Cfg.Screen.Resolution.width           = [{width of current video resolution}] %
-% Cfg.Screen.Resolution.height          = [{heigth of current video resolution}]
-% Cfg.Screen.Resolution.pixelSize       = [{color depth of current video resolution}]
-% Cfg.Screen.Resolution.hz              = [{refresh rate of current video resolution}]
-% Cfg.Screen.fontSize                   = [{24}]
-% Cfg.Screen.fontName                   = {'Courier New'}
+% Cfg.Screen.color                      = [ {[255, 255, 255]} | [R, G, B] ] %DEFAULTS TO WHITE BACKGROUND
+% Cfg.Screen.Resolution.width           = [ {width of current video resolution} ] %
+% Cfg.Screen.Resolution.height          = [ {heigth of current video resolution} ]
+% Cfg.Screen.Resolution.pixelSize       = [ {color depth of current video resolution} ]
+% Cfg.Screen.Resolution.hz              = [ {refresh rate of current video resolution} ]
+% Cfg.Screen.fontSize                   = [ {24} ]
+% Cfg.Screen.fontName                   = [ {'Courier New'} ]
 %
 %SOUND:
-% Cfg.Sound.soundMethod                 = [{'none'}|'psychportaudio'|'audioplayer'|'wavplay'|'snd']
+% Cfg.Sound.soundMethod                 = [ {'none'} | 'psychportaudio' | 'audioplayer' | 'wavplay' | 'snd' ]
 %
 %RESPONSE
-% Cfg.specialKeys.quitExperiment        = [ {20} ]; %Pressing this key ('q' on a Mac) during a page flip will abort the experiment
-% Cfg.specialKeys.pauseExperiment       = [ {19} ]; %Pressing this key ('p' on a Mac) during a page flip will pause and resume the experiment
-% Cfg.responseDevice                    = [ {'MOUSE'}|'VOICEKEY'|'LUMINAPARALLEL'|'SERIAL'|'KEYBOARD' ]
+% Cfg.responseDevice                    = [ {'MOUSE'} | 'VOICEKEY' | 'LUMINAPARALLEL' | 'SERIAL' | 'KEYBOARD' ]
 % Cfg.enabledKeys                       = [ {[]} ] %PROVIDE A LIST OF KEYS THAT KbCheck ACTUALLY CONSIDERS 
-% Cfg.responseTerminatesTrial           = [ {0}, 1 ]
-% Cfg.waitUntilResponseAfterTrial       = [ {0}, 1 ]
-% Cfg.plotVOT                           = [ {0}, 1 ]    %PLOT VOICE ONSET TIMES, REQUIRES TWO SCREENS
-% Cfg.Eyetracking.useEyelink            = [ {0}, 1 ]    %USE EYELINK
-% Cfg.Eyetracking.useEyelinkMouseMode   = [ {0}, 1 ]    %SIMULATE EYE BY MOUSE
+% Cfg.responseTerminatesTrial           = [ {0} | 1 ]
+% Cfg.waitUntilResponseAfterTrial       = [ {0} | 1 ]
+% Cfg.plotVOT                           = [ {0} | 1 ]    %PLOT VOICE ONSET TIMES, REQUIRES TWO SCREENS
+% Cfg.Eyetracking.useEyelink            = [ {0} | 1 ]    %USE EYELINK
+% Cfg.Eyetracking.useEyelinkMouseMode   = [ {0} | 1 ]    %SIMULATE EYE BY MOUSE
 %
 %TRIGGERING
 % Cfg.issueTriggers                     = [ {0} | 1 ] %ALLOWS TRIGGERING, REQUIRES DATA ACQUISITION TOOLBOX
-% Cfg.validTriggerValues                = [{[]}, vectorOfValues] %ALLOWS RESTRICTING WHICH PAGES RELEASE A TRIGGER [] means all valid
+% Cfg.validTriggerValues                = [ {[]} | vectorOfValues ] %ALLOWS RESTRICTING WHICH PAGES RELEASE A TRIGGER [] means all valid
 % Cfg.synchToScanner                    = [ {0} | 1 ] %WAIT FOR EXTERNAL SIGNAL (E.G. TRIGGER FROM MR-SCANNER)
-% Cfg.synchToScannerPort                = [{'PARALLEL'}|'SERIAL', 'SIMULATE']; %PORT FOR EXTERNAL SYNCH SIGNAL
+% Cfg.synchToScannerPort                = [ {'PARALLEL'} | 'SERIAL' | 'SIMULATE' ]; %PORT FOR EXTERNAL SYNCH SIGNAL
 % Cfg.scannerSynchTimeOutMs             = [ {inf} ] %TIMEOT IN MILLISECONDS WHEN WAITING FOR SCANNER TRIGGER ON ANY PORT
-% Cfg.digitalInputDevice                = [ {'NONE'}|'PARALLEL'|'NIDAQ2' ]
-% Cfg.digitalOutputDevice               = [ {'NONE'}|'PARALLEL'|'NIDAQ2'|'ARDUINO' ]
-% Cfg.ScannerSynchShowDefaultMessage    = [0|{1}]
-% Cfg.scannerSynchTimeOutMs             = {inf} %BY DEFAULT WAIT FOREVER
+% Cfg.digitalInputDevice                = [ {'NONE'} | 'PARALLEL' | 'NIDAQ2' ]
+% Cfg.digitalOutputDevice               = [ {'NONE'} | 'PARALLEL' | 'NIDAQ2' | 'ARDUINO' ]
+% Cfg.ScannerSynchShowDefaultMessage    = [ 0 | {1} ]
+% Cfg.scannerSynchTimeOutMs             = [ {inf} ] %BY DEFAULT WAIT FOREVER
 % Cfg.serialPortName                    = [ {'COM1'}, ... 'COMn' ]
 %%EXPERIMENTAL
-% Cfg.Trigger.triggerType               = [{'pulse'}, 'state', 'train']; %THIS IS NOT YET FULLY IMPLEMENTED ON ALL PORTS
+% Cfg.Trigger.triggerType               = [ {'pulse'} | 'state' | 'train' ]; %THIS IS NOT YET FULLY IMPLEMENTED ON ALL PORTS
 %
 %TIMING
 %Cfg.useTrialOnsetTimes                 = [ {0} | 1 ] %THIRD COLUMN IN TRIAL-DEFINITION FILE DETERMINES WHEN TRIAL IS STARTED WR TO START OF EXPT
