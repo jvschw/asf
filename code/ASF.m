@@ -33,7 +33,7 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %
 %RESPONSE
 % Cfg.responseDevice                    = [ {'MOUSE'} | 'VOICEKEY' | 'LUMINAPARALLEL' | 'SERIAL' | 'KEYBOARD' ]
-% Cfg.enabledKeys                       = [ {[]} ] %PROVIDE A LIST OF KEYS THAT KbCheck ACTUALLY CONSIDERS 
+% Cfg.enabledKeys                       = [ {1:256} ] %PROVIDE A LIST OF KEYS THAT KbCheck ACTUALLY CONSIDERS 
 % Cfg.responseTerminatesTrial           = [ {0} | 1 ]
 % Cfg.waitUntilResponseAfterTrial       = [ {0} | 1 ]
 % Cfg.plotVOT                           = [ {0} | 1 ]    %PLOT VOICE ONSET TIMES, REQUIRES TWO SCREENS
@@ -80,7 +80,7 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %[ExpInfo] = ASF('Demo1.std', 'Demo1.trd', [], []) %FROM ASF's DEMO DIRECTORY
 %
 %
-%% RESPOND WITH KEYBOARD INSTEAD OF MOUSE (you must provide a list of enabled keys)
+%% RESPOND WITH KEYBOARD INSTEAD OF MOUSE (you can provide a list of enabled keys)
 %% WITHOUT LOGGING (empty argument expName)
 %Cfg.Screen.skipSyncTests = 1;
 %Cfg.responseDevice = 'KEYBOARD'
@@ -162,7 +162,7 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %
 %% LATEST CHANGES
 %%V.054
-%20160321 ADDED     When using the keyboard all keys are disabled by default. The user needs to provide a list of enabled keys. 
+%20160321 ADDED     When using the keyboard all keys are enabled by default. The user can provide a list of enabled keys. 
 %20160321 ADDED     empty expName means that no results will be logged
 %20160322 ADDED     Configurable way to start and end experiments Cfg.specialKeys.startExperiment and Cfg.specialKeys.endExperimen
 %
@@ -266,7 +266,7 @@ if ~isfield(Cfg.Trigger, 'triggerType'), Cfg.Trigger.triggerType = 'pulse'; else
 
 %RESPONSE DEVICE SETTINGS
 if ~isfield(Cfg, 'responseDevice'), Cfg.responseDevice = 'MOUSE'; else end; %[ {'MOUSE'}|'VOICEKEY'|'LUMINAPARALLEL'|'SERIAL'|'KEYBOARD' ]
-if ~isfield(Cfg, 'enabledKeys'), Cfg.enabledKeys = []; else end;
+if ~isfield(Cfg, 'enabledKeys'), Cfg.enabledKeys = 1:256; else end;
 if ~isfield(Cfg, 'specialKeys'), Cfg.specialKeys = []; else end;
 if ~isfield(Cfg.specialKeys, 'quitExperiment')
     if ispc
