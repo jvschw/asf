@@ -10,3 +10,6 @@ and neuroimaging experiments based on the psychophysics toolbox for MATLAB. Beha
 ## Website
 http://jvschw.github.io/asf/
 
+## WIKI
+https://github.com/jvschw/asf/wiki
+
