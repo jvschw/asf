@@ -32,8 +32,6 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 % Cfg.Sound.soundMethod                 = [ {'none'} | 'psychportaudio' | 'audioplayer' | 'wavplay' | 'snd' ]
 %
 %RESPONSE
-% Cfg.specialKeys.quitExperiment        = [ {20} ]; %Pressing this key ('q' on a Mac) during a page flip will abort the experiment
-% Cfg.specialKeys.pauseExperiment       = [ {19} ]; %Pressing this key ('p' on a Mac) during a page flip will pause and resume the experiment
 % Cfg.responseDevice                    = [ {'MOUSE'} | 'VOICEKEY' | 'LUMINAPARALLEL' | 'SERIAL' | 'KEYBOARD' ]
 % Cfg.enabledKeys                       = [ {[]} ] %PROVIDE A LIST OF KEYS THAT KbCheck ACTUALLY CONSIDERS 
 % Cfg.responseTerminatesTrial           = [ {0} | 1 ]
