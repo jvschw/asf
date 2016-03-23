@@ -23,17 +23,17 @@ if nTrials == 0
     fprintf(1, 'WARNING NO TRIALS SAVED!\n')
     res = [];
 else
-    res(nTrials, 3) = 0;
+    % Preallocate an nTrials x 5 matrix
+    res = NaN(nTrials, 5);
     for i=1:nTrials
         res(i, 1) = expinfo.TrialInfo(i).trial.code;
         thisResponse = expinfo.TrialInfo(i).Response;
         if isempty(thisResponse.RT)
-            res(i, 2) = NaN;
-            res(i, 3) = NaN;
+            % Do nothing; the matrix was preallocated with NaNs
         else
             res(i, 2) = thisResponse.RT(1); %MULTIPLE RESPONSES NEED SPECIAL TREATMENT JVS20130329
             if isempty(thisResponse.key)
-                res(i, 3) = NaN;
+                % Do nothing; the matrix was preallocated with NaNs
             else
                 res(i, 3) = thisResponse.key(1); %IF YOU WANT MULTIPLE KEYS MAKE IT A CELL
             end
@@ -71,17 +71,17 @@ if nTrials == 0
     fprintf(1, 'WARNING NO TRIALS SAVED!\n')
     res = [];
 else
-    res(nTrials, 3) = 0;
+    % Preallocate an nTrials x 4 matrix
+    res = NaN(nTrials, 4);
     for i=1:nTrials
         res(i, 1) = expinfo.trialinfo(i).trial.code;
         thisResponse = expinfo.trialinfo(i).response;
         if isempty(thisResponse.RT)
-            res(i, 2) = NaN;
-            res(i, 3) = NaN;
+            % Do nothing; the matrix was preallocated with NaNs
         else
             res(i, 2) = thisResponse.RT;
             if isempty(thisResponse.key)
-                res(i, 3) = NaN;
+             % Do nothing; the matrix was preallocated with NaNs
             else
                 res(i, 3) = thisResponse.key(1); %IF YOU WNAT MULTIPLE KEYS MAKE IT A CELL
             end
@@ -89,7 +89,7 @@ else
         if isfield(expinfo.trialinfo(i).trial, 'CorrectResponse')
             res(i, 4) = expinfo.trialinfo(i).trial.CorrectResponse; %REQUESTED RESPONSE
         else
-            res(i, 4) = NaN;
+            % Do nothing; the matrix was preallocated with NaNs
         end
     end
 end
