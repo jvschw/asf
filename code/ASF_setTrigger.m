@@ -5,12 +5,12 @@ if Cfg.issueTriggers
         if ismember(triggerVal, Cfg.validTriggerValues)
             switch Cfg.digitalOutputDevice
                 case 'ARDUINO'
-                    ASF_arduinoTrigger(Cfg.hardware.Arduino.hSerial, triggerVal, Cfg.Trigger.triggerType)
+                    ASF_arduinoTrigger(Cfg.Hardware.Arduino.hSerial, triggerVal, Cfg.Trigger.triggerType)
                     %DEBUGGING
                     %fprintf(1, 'MARKER %d\n', triggerVal);
                 case 'PARALLEL'
                     %TRIGGER ON PARALLEL PORT
-                    putvalue(Cfg.hardware.DigitalOutput.mydio.TriggerPort, triggerVal);
+                    putvalue(Cfg.Hardware.DigitalOutput.mydio.TriggerPort, triggerVal);
                     switch Cfg.Trigger.triggerType
                         case 'state'
                             %DO NOTHING ELSE
@@ -20,7 +20,7 @@ if Cfg.issueTriggers
                             %CHANNEL; THE DISADVANTAGE IS THAT THE
                             %EXPERIMENT IS HELD UP BY 5ms
                             WaitSecs(0.005);
-                            putvalue(Cfg.hardware.DigitalOutput.mydio.TriggerPort, 0);
+                            putvalue(Cfg.Hardware.DigitalOutput.mydio.TriggerPort, 0);
                     end
                 case 'PARALLEL32'
                     lptwrite(888, triggerVal)

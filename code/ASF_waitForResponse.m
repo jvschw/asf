@@ -21,7 +21,7 @@ switch Cfg.responseDevice
         end
         
     case 'LUMINAPARALLEL'
-        [x, y, buttons, t0, t1] = WaitForLuminaPress(Cfg.hardware.parallel.mydio_in, timeout);
+        [x, y, buttons, t0, t1] = WaitForLuminaPress(Cfg.Hardware.parallel.mydio_in, timeout);
 
     case {'LUMINASERIAL', 'ARDUINOSERIAL'}
         x = [];
@@ -337,16 +337,16 @@ end
 buttons(4) = 0;
 t0 = GetSecs;
 t1 = t0;
-% while ((~Cfg.hardware.serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
-%     buttons = fgets(Cfg.hardware.serial.oSerial);
+% while ((~Cfg.Hardware.serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
+%     buttons = fgets(Cfg.Hardware.serial.oSerial);
 %     
 %     t1 = GetSecs;
 % end
 
 while ((t1 - t0) < timeout) % wait for press
-    if Cfg.hardware.serial.oSerial.BytesAvailable
+    if Cfg.Hardware.serial.oSerial.BytesAvailable
         
-        sbuttons = str2num(fscanf(Cfg.hardware.serial.oSerial)); %#ok<ST2NM>
+        sbuttons = str2num(fscanf(Cfg.Hardware.serial.oSerial)); %#ok<ST2NM>
         
         %IF ONLY A SINGLE BUTTON HAS BEEN PRESSED, sbuttons WILL BE BETWEEN
         %1 AND 4, IF SEVERAL BUTTONS HAVE BEEN PRESSED, E.G. 1 AND 4 THE
@@ -371,8 +371,8 @@ while ((t1 - t0) < timeout) % wait for press
         end
 
 %         %CLEAN UP IN CASE MONKEY GOES WILD
-%         while Cfg.hardware.serial.oSerial.BytesAvailable
-%             junk = fscanf(Cfg.hardware.serial.oSerial);
+%         while Cfg.Hardware.serial.oSerial.BytesAvailable
+%             junk = fscanf(Cfg.Hardware.serial.oSerial);
 %         end
         
     end
@@ -391,16 +391,16 @@ buttons(4) = 0;
 t0 = GetSecs;
 t1 = t0;
 return
-% while ((~Cfg.hardware.serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
-%     buttons = fgets(Cfg.hardware.serial.oSerial);
+% while ((~Cfg.Hardware.serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
+%     buttons = fgets(Cfg.Hardware.serial.oSerial);
 %     
 %     t1 = GetSecs;
 % end
 
 while ((t1 - t0) < timeout) % wait for press
-    if Cfg.hardware.serial.oSerial.BytesAvailable
+    if Cfg.Hardware.serial.oSerial.BytesAvailable
         
-        sbuttons = str2num(fscanf(Cfg.hardware.serial.oSerial)); %#ok<ST2NM>
+        sbuttons = str2num(fscanf(Cfg.Hardware.serial.oSerial)); %#ok<ST2NM>
         
         %IF ONLY A SINGLE BUTTON HAS BEEN PRESSED, sbuttons WILL BE BETWEEN
         %1 AND 4, IF SEVERAL BUTTONS HAVE BEEN PRESSED, E.G. 1 AND 4 THE
@@ -425,8 +425,8 @@ while ((t1 - t0) < timeout) % wait for press
         end
 
 %         %CLEAN UP IN CASE MONKEY GOES WILD
-%         while Cfg.hardware.serial.oSerial.BytesAvailable
-%             junk = fscanf(Cfg.hardware.serial.oSerial);
+%         while Cfg.Hardware.serial.oSerial.BytesAvailable
+%             junk = fscanf(Cfg.Hardware.serial.oSerial);
 %         end
         
     end

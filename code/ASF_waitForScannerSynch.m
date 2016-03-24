@@ -11,9 +11,9 @@ if Cfg.ScannerSynchShowDefaultMessage
 end
 switch Cfg.synchToScannerPort
     case 'PARALLEL'
-        WaitForScannerSynchParallel(Cfg.hardware.parallel.mydio_in.LuminaPort, Cfg.scannerSynchTimeOutMs);
+        WaitForScannerSynchParallel(Cfg.Hardware.parallel.mydio_in.LuminaPort, Cfg.scannerSynchTimeOutMs);
     case 'SERIAL'
-        WaitForScannerSynchSerial(Cfg.hardware.serial.oSerial, Cfg.scannerSynchTimeOutMs)
+        WaitForScannerSynchSerial(Cfg.Hardware.serial.oSerial, Cfg.scannerSynchTimeOutMs)
     case 'SIMULATE'
         WaitForScannerSynchSimulated(Cfg, windowPtr, Cfg.scannerSynchTimeOutMs);
 end

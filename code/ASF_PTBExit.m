@@ -89,8 +89,8 @@ if  ~isempty(out)
     fclose(out);
     %MAYBE I NEED TO INVALIDATE THE HANDLE TO SERIAL PORT
     %SUCH AS
-    %delete(cfg.hardware.serial.oSerial)
-    Cfg.hardware.serial = [];
+    %delete(cfg.Hardware.serial.oSerial)
+    Cfg.Hardware.serial = [];
 end
 
 %ANY TAKS RUNNING ON THE NI CARD?
@@ -109,8 +109,8 @@ if exist('PsychHID.dll', 'file') == 2
         for i = length(daqdevices):-1:1
             delete(daqdevices(i));
         end
-        if isfield(Cfg.hardware, 'DigitalOutput')
-            Cfg.hardware.DigitalOutput = [];
+        if isfield(Cfg.Hardware, 'DigitalOutput')
+            Cfg.Hardware.DigitalOutput = [];
         end
     end
 end
@@ -123,9 +123,9 @@ if Cfg.StimulationDevices.usePiezo
 end
 
 %CLOSE CONNECTION TO ARDUINO
-if Cfg.hardware.Arduino.useArduino
-    fclose(Cfg.hardware.Arduino.hSerial);
-    %clear(Cfg.hardware.Arduino.hSerial)
+if Cfg.Hardware.Arduino.useArduino
+    fclose(Cfg.Hardware.Arduino.hSerial);
+    %clear(Cfg.Hardware.Arduino.hSerial)
 end
 
 % %KILL WHATEVER
