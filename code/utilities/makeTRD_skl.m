@@ -1,9 +1,10 @@
 function [TRDfileName, Cfg] = makeTRD_skl(subjectID, session, run, STDfileName, Cfg)
-%function TRDfileName = RESOPACS_fMRI_makeTRD(subject, session, run, Cfg)
+%function TRDfileName = makeTRD_skl(subject, session, run, Cfg)
+% 
 % This skeleton function is a template for users to fill in (or delete) 
 % certain details in order to generate a TRD file for their experiments.
-% The layout of the subfunctions are ideal for an event-related fMRI 
-% experiment.
+% The layout of the subfunctions is designed for an event-related fMRI 
+% experiment, but can be altered or edited for any kind of experiment.
 %
 %   EXAMPLE CALL
 %      TRDfileName = makeTRD_skl('Demo', 1, 1, 'stimuli.std', Cfg)
@@ -20,13 +21,13 @@ TrialDefinitions = addIntertrialJitter(TrialDefinitions, Cfg);
 %Add blank trials to start and end (mainly for fMRI)
 TrialDefinitions = addBlankTrials(TrialDefinitions, Cfg);
 
-fprintf(1, 'The experiment takes %d seconds, i.e. %d volumes at a TR of %5.3f s\n', ceil(TrialDefinitions(end).tOnset+Cfg.Dur.blankTrial), ceil((TrialDefinitions(end).tOnset+Cfg.Dur.blankTrial)/Cfg.TR), Cfg.TR);
+% Output some timing info to the command line
+fprintf(1, 'The experiment takes %d seconds, i.e. %d volumes with a TR of %5.3f s\n', ceil(TrialDefinitions(end).tOnset+Cfg.Dur.blankTrial), ceil((TrialDefinitions(end).tOnset+Cfg.Dur.blankTrial)/Cfg.TR), Cfg.TR);
 
 %Write out TRD file to disk
 TRDfileName = writeTRD(TrialDefinitions, subjectID, session, run, Cfg);
-return
 
-
+%% SUBFUNCTIONS
 function [TrialDefinitions, Cfg] = makeDesign(STDfile, Cfg)
 % Sets up some basic configurations for the trial definitions
 
