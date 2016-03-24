@@ -248,18 +248,18 @@ if ~isfield(Cfg.responseSettings, 'allowTrialRepeat'), Cfg.responseSettings.allo
 if ~isfield(Cfg, 'StimulationDevices'), Cfg.StimulationDevices = []; else end;
 if ~isfield(Cfg.StimulationDevices, 'usePiezo'), Cfg.StimulationDevices.usePiezo = 0; else end; %[{0}|1]
 
-if ~isfield(Cfg, 'hardware'), Cfg.hardware = []; else end;
+if ~isfield(Cfg, 'Hardware'), Cfg.Hardware = []; else end;
 %ARDUINO
-if ~isfield(Cfg.hardware, 'Arduino'), Cfg.hardware.Arduino = []; else end;
-if ~isfield(Cfg.hardware.Arduino, 'useArduino'), Cfg.hardware.Arduino.useArduino = 0; else end;
-if ~isfield(Cfg.hardware.Arduino, 'comPort'), Cfg.hardware.Arduino.comPort = []; else end;
-if ~isfield(Cfg.hardware.Arduino.comPort, 'port'), Cfg.hardware.Arduino.comPort.port = 'COM4'; else end;
-if ~isfield(Cfg.hardware.Arduino.comPort, 'baudRate'), Cfg.hardware.Arduino.comPort.baudRate = 9600; else end;
-if ~isfield(Cfg.hardware, 'Serial'), Cfg.hardware.Serial = []; else end;
-if ~isfield(Cfg.hardware.Serial, 'useSerialOut'), Cfg.hardware.Serial.useSerialOut = 0; else end;
-if ~isfield(Cfg.hardware.Serial, 'comPort'), Cfg.hardware.Serial.comPort = []; else end;
-if ~isfield(Cfg.hardware.Serial.comPort, 'port'), Cfg.hardware.Serial.comPort.port = 'COM4'; else end;
-if ~isfield(Cfg.hardware.Serial.comPort, 'baudRate'), Cfg.hardware.Serial.comPort.baudRate = 9600; else end;
+if ~isfield(Cfg.Hardware, 'Arduino'), Cfg.Hardware.Arduino = []; else end;
+if ~isfield(Cfg.Hardware.Arduino, 'useArduino'), Cfg.Hardware.Arduino.useArduino = 0; else end;
+if ~isfield(Cfg.Hardware.Arduino, 'comPort'), Cfg.Hardware.Arduino.comPort = []; else end;
+if ~isfield(Cfg.Hardware.Arduino.comPort, 'port'), Cfg.Hardware.Arduino.comPort.port = 'COM4'; else end;
+if ~isfield(Cfg.Hardware.Arduino.comPort, 'baudRate'), Cfg.Hardware.Arduino.comPort.baudRate = 9600; else end;
+if ~isfield(Cfg.Hardware, 'Serial'), Cfg.Hardware.Serial = []; else end;
+if ~isfield(Cfg.Hardware.Serial, 'useSerialOut'), Cfg.Hardware.Serial.useSerialOut = 0; else end;
+if ~isfield(Cfg.Hardware.Serial, 'comPort'), Cfg.Hardware.Serial.comPort = []; else end;
+if ~isfield(Cfg.Hardware.Serial.comPort, 'port'), Cfg.Hardware.Serial.comPort.port = 'COM4'; else end;
+if ~isfield(Cfg.Hardware.Serial.comPort, 'baudRate'), Cfg.Hardware.Serial.comPort.baudRate = 9600; else end;
 
 if ~isfield(Cfg, 'Trigger'), Cfg.Trigger = []; else end;
 if ~isfield(Cfg.Trigger, 'triggerType'), Cfg.Trigger.triggerType = 'pulse'; else end;
@@ -323,6 +323,8 @@ else
         error('ASF_CONFIG_ERROR', 'Number of pulses for TMS bursts not provided') %#ok<CTPCT>
     end
 end
+if isfield(Cfg, 'hardware'), error('RENAME VARIABLE Cfg.hardware TO Cfg.Hardware.'); else end
+
 %AT PROGRAM CHECKOUT
 if ~isfield(Cfg, 'enableTimingDiagnosis'), Cfg.enableTimingDiagnosis = 0; else end; %DEFAULT NO TIMING DIAGNOSIS BECAUSE IT CREATES TROUBLE WITH MOST USER SUPPLIED TRIAL FUNCTION
 
@@ -720,8 +722,8 @@ fprintf(1, 'DONE\n');
 if Cfg.synchToScanner
     switch Cfg.synchToScannerPort
         case 'IO64'
-            Cfg.hardware.scannerIO64 = io64();
-            [triggerNo, triggerList] = checkTriggerSignal64(1, 2, Cfg.hardware.scannerIO64);
+            Cfg.Hardware.scannerIO64 = io64();
+            [triggerNo, triggerList] = checkTriggerSignal64(1, 2, Cfg.Hardware.scannerIO64);
             %ADD ERROR CHECKING
 
         case 'PARALLEL'
@@ -1080,50 +1082,50 @@ switch Cfg.responseDevice
     case 'LUMINAPARALLEL'
         fprintf(1, 'START INITIALIZING LUMINA ON PARALLEL PORT...\n');
         %CHECK WHETHER THIS ALREADY EXISTS
-        %Cfg.hardware.parallel.mydio_in
+        %Cfg.Hardware.parallel.mydio_in
         Cfg = InitParallelPortInput(Cfg);
         fprintf(1, 'DONE INITIALIZING LUMINA\n');
         
         
     case 'LUMINASERIAL'
-        if ~isfield(Cfg, 'hardware'), Cfg.hardware = []; else end
-        if ~isfield(Cfg.hardware, 'serial'), Cfg.hardware.serial = []; else end
-        if ~isfield(Cfg.hardware.serial, 'BaudRate'), Cfg.hardware.serial.BaudRate = 115200;else end
+        if ~isfield(Cfg, 'Hardware'), Cfg.Hardware = []; else end
+        if ~isfield(Cfg.Hardware, 'serial'), Cfg.Hardware.serial = []; else end
+        if ~isfield(Cfg.Hardware.serial, 'BaudRate'), Cfg.Hardware.serial.BaudRate = 115200;else end
         
         fprintf(1, 'CREATING SERIAL OBJECT ... ');
-        Cfg.hardware.serial.oSerial = serial(Cfg.serialPortName, 'Tag', 'SerialResponseBox', 'BaudRate', Cfg.hardware.serial.BaudRate);
-        set(Cfg.hardware.serial.oSerial, 'Timeout', 0.001) %RECONSIDER
-        Cfg.hardware.serial.oSerial.Terminator = '';
-        set(Cfg.hardware.serial.oSerial,'InputBufferSize',128)
-        %Cfg.hardware.serial.oSerial.ReadAsyncMode = 'manual';%'continuous';
-        %Cfg.hardware.serial.ClassSerial = class(Cfg.hardware.serial, 'SerialResponseBox');
+        Cfg.Hardware.serial.oSerial = serial(Cfg.serialPortName, 'Tag', 'SerialResponseBox', 'BaudRate', Cfg.Hardware.serial.BaudRate);
+        set(Cfg.Hardware.serial.oSerial, 'Timeout', 0.001) %RECONSIDER
+        Cfg.Hardware.serial.oSerial.Terminator = '';
+        set(Cfg.Hardware.serial.oSerial,'InputBufferSize',128)
+        %Cfg.Hardware.serial.oSerial.ReadAsyncMode = 'manual';%'continuous';
+        %Cfg.Hardware.serial.ClassSerial = class(Cfg.Hardware.serial, 'SerialResponseBox');
         %dummy = warning( 'off', 'instrument:fscanf:unsuccessfulRead')
         warning off all %THIS IS NASTY!!! We do this because of timeout warning
         fprintf(1, 'DONE\n');
-        fprintf(1, 'STARTING SERIAL COMMUNICATION WITH SERIAL RESPONSE BOX (BAUD RATE: %d) ... ', Cfg.hardware.serial.BaudRate);
-        fopen(Cfg.hardware.serial.oSerial);
+        fprintf(1, 'STARTING SERIAL COMMUNICATION WITH SERIAL RESPONSE BOX (BAUD RATE: %d) ... ', Cfg.Hardware.serial.BaudRate);
+        fopen(Cfg.Hardware.serial.oSerial);
         fprintf('DONE\n');
-        %Cfg.hardware.serial.oSerial.BytesAvailable
+        %Cfg.Hardware.serial.oSerial.BytesAvailable
         
     case 'ARDUINOSERIAL' %THIS IS A BAD EMULATION OF THE LUMINA BOX IN SERIAL MODE
-        if ~isfield(Cfg, 'hardware'), Cfg.hardware = []; else end
-        if ~isfield(Cfg.hardware, 'serial'), Cfg.hardware.serial = []; else end
-        if ~isfield(Cfg.hardware.serial, 'BaudRate'), Cfg.hardware.serial.BaudRate = 9600;else end
+        if ~isfield(Cfg, 'Hardware'), Cfg.Hardware = []; else end
+        if ~isfield(Cfg.Hardware, 'serial'), Cfg.Hardware.serial = []; else end
+        if ~isfield(Cfg.Hardware.serial, 'BaudRate'), Cfg.Hardware.serial.BaudRate = 9600;else end
         
         fprintf(1, 'CREATING SERIAL OBJECT ... ');
-        Cfg.hardware.serial.oSerial = serial(Cfg.serialPortName, 'Tag', 'SerialResponseBox', 'BaudRate', Cfg.hardware.serial.BaudRate);
-        set(Cfg.hardware.serial.oSerial, 'Timeout', 0.001) %RECONSIDER
-        Cfg.hardware.serial.oSerial.Terminator = 'LF/CR';%JVS
-        set(Cfg.hardware.serial.oSerial,'InputBufferSize',128)
-        %Cfg.hardware.serial.oSerial.ReadAsyncMode = 'manual';%'continuous';
-        %Cfg.hardware.serial.ClassSerial = class(Cfg.hardware.serial, 'SerialResponseBox');
+        Cfg.Hardware.serial.oSerial = serial(Cfg.serialPortName, 'Tag', 'SerialResponseBox', 'BaudRate', Cfg.Hardware.serial.BaudRate);
+        set(Cfg.Hardware.serial.oSerial, 'Timeout', 0.001) %RECONSIDER
+        Cfg.Hardware.serial.oSerial.Terminator = 'LF/CR';%JVS
+        set(Cfg.Hardware.serial.oSerial,'InputBufferSize',128)
+        %Cfg.Hardware.serial.oSerial.ReadAsyncMode = 'manual';%'continuous';
+        %Cfg.Hardware.serial.ClassSerial = class(Cfg.Hardware.serial, 'SerialResponseBox');
         %dummy = warning( 'off', 'instrument:fscanf:unsuccessfulRead')
         warning off all %THIS IS NASTY!!! We do this because of timeout warning
         fprintf(1, 'DONE\n');
-        fprintf(1, 'STARTING SERIAL COMMUNICATION WITH SERIAL RESPONSE BOX (BAUD RATE: %d) ... ', Cfg.hardware.serial.BaudRate);
-        fopen(Cfg.hardware.serial.oSerial);
+        fprintf(1, 'STARTING SERIAL COMMUNICATION WITH SERIAL RESPONSE BOX (BAUD RATE: %d) ... ', Cfg.Hardware.serial.BaudRate);
+        fopen(Cfg.Hardware.serial.oSerial);
         fprintf('DONE\n');
-        %Cfg.hardware.serial.oSerial.BytesAvailable
+        %Cfg.Hardware.serial.oSerial.BytesAvailable
           
     case  'KEYBOARD'
         fprintf(1, 'USING KEYBOARD AS RESPONSE DEVICE\n');
@@ -1797,9 +1799,9 @@ end
 % % if Cfg.issueTriggers
 % %     flipval = (flipval == 0);
 % %     if flipval
-% %         putvalue(Cfg.hardware.parallel.mydio.OutPutLine, Cfg.hardware.parallel.ON);
+% %         putvalue(Cfg.Hardware.parallel.mydio.OutPutLine, Cfg.Hardware.parallel.ON);
 % %     else
-% %         putvalue(Cfg.hardware.parallel.mydio.OutPutLine, Cfg.hardware.parallel.OFF);
+% %         putvalue(Cfg.Hardware.parallel.mydio.OutPutLine, Cfg.Hardware.parallel.OFF);
 % %     end
 % % end
 %
@@ -1818,7 +1820,7 @@ end
 %
 %     case 'LUMINAPARALLEL'
 %         %[x, y, buttons] = WaitForLuminaPress(Cfg.hResponseDevice, timeout);
-%         [x, y, buttons, t0, t1] = WaitForLuminaPress(Cfg.hardware.parallel.mydio_in, timeout);
+%         [x, y, buttons, t0, t1] = WaitForLuminaPress(Cfg.Hardware.parallel.mydio_in, timeout);
 %
 %     case 'LUMINASERIAL'
 %         x = [];
@@ -1844,24 +1846,24 @@ end
 % buttons(4) = 0;
 % t0 = GetSecs;
 % t1 = t0;
-% % while ((~Cfg.hardware.serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
-% %     buttons = fgets(Cfg.hardware.serial.oSerial);
+% % while ((~Cfg.Hardware.serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
+% %     buttons = fgets(Cfg.Hardware.serial.oSerial);
 % %
 % %     t1 = GetSecs;
 % % end
 %
 % while ((t1 - t0) < timeout) % wait for press
-%     if Cfg.hardware.serial.oSerial.BytesAvailable
-%         %buttons = fgets(Cfg.hardware.serial.oSerial);
-%         sbuttons = str2num(fscanf(Cfg.hardware.serial.oSerial)); %#ok<ST2NM>
+%     if Cfg.Hardware.serial.oSerial.BytesAvailable
+%         %buttons = fgets(Cfg.Hardware.serial.oSerial);
+%         sbuttons = str2num(fscanf(Cfg.Hardware.serial.oSerial)); %#ok<ST2NM>
 %         if sbuttons < 5
 %             %TRANSFORM INTO A 4 ELEMENT VECTOR
 %             buttons(sbuttons) = 1;
 %         end
 %
 % %         %CLEAN UP IN CASE MONKEY GOES WILD
-% %         while Cfg.hardware.serial.oSerial.BytesAvailable
-% %             junk = fscanf(Cfg.hardware.serial.oSerial);
+% %         while Cfg.Hardware.serial.oSerial.BytesAvailable
+% %             junk = fscanf(Cfg.Hardware.serial.oSerial);
 % %         end
 %
 %
@@ -1995,7 +1997,7 @@ end
 %     fclose(out);
 %     %MAYBE I NEED TO INVALIDATE THE HANDLE TO SERIAL PORT
 %     %SUCH AS
-%     %delete(Cfg.hardware.serial.oSerial)
+%     %delete(Cfg.Hardware.serial.oSerial)
 % end
 %
 % %FIND ALL DIO STUFF THATY WE MAY HAVE CREATED
@@ -2009,7 +2011,7 @@ end
 %
 % % switch Cfg.responseDevice
 % %     case 'LUMINAPARALLEL'
-% %         delete(Cfg.hardware.parallel.mydio_in)
+% %         delete(Cfg.Hardware.parallel.mydio_in)
 % % end
 
 function PTBCatchError
@@ -2157,9 +2159,9 @@ end
 
 %% INPUT-OUTPUT LOW-LEVEL
 function Cfg = InitDigitalOutput(Cfg)
-if ~isfield(Cfg, 'hardware'), Cfg.hardware = []; else end
-if ~isfield(Cfg.hardware, 'DigitalOutput'), Cfg.hardware.DigitalOutput = []; else end
-%if ~isfield(Cfg.hardware.parallel, 'ON'), Cfg.hardware.parallel.ON = 0; Cfg.hardware.parallel.OFF = 1;else end
+if ~isfield(Cfg, 'Hardware'), Cfg.Hardware = []; else end
+if ~isfield(Cfg.Hardware, 'DigitalOutput'), Cfg.Hardware.DigitalOutput = []; else end
+%if ~isfield(Cfg.Hardware.parallel, 'ON'), Cfg.Hardware.parallel.ON = 0; Cfg.Hardware.parallel.OFF = 1;else end
 switch Cfg.digitalOutputDevice
     case 'NONE'
     case 'PARALLEL'
@@ -2176,9 +2178,9 @@ end
 
 %% InitParallelPortOutput
 function Cfg = InitParallelPortOutput32bit(Cfg)
-if ~isfield(Cfg, 'hardware'), Cfg.hardware = []; else end
-if ~isfield(Cfg.hardware, 'parallel'), Cfg.hardware.parallel = []; else end
-if ~isfield(Cfg.hardware.parallel, 'ON'), Cfg.hardware.parallel.ON = 0; Cfg.hardware.parallel.OFF = 1;else end
+if ~isfield(Cfg, 'Hardware'), Cfg.Hardware = []; else end
+if ~isfield(Cfg.Hardware, 'parallel'), Cfg.Hardware.parallel = []; else end
+if ~isfield(Cfg.Hardware.parallel, 'ON'), Cfg.Hardware.parallel.ON = 0; Cfg.Hardware.parallel.OFF = 1;else end
 
 fprintf(1, 'INITIALIZING PARALLEL PORT ...\n');
 if exist('lptwrite')
@@ -2191,39 +2193,39 @@ fprintf(1, 'DONE\n');
 
 %% InitArduino
 function Cfg = InitArduinoOutput(Cfg)
-fprintf('INITIALIZING ARDUINO BOARD ON %s\n', Cfg.hardware.Arduino.comPort.port);
+fprintf('INITIALIZING ARDUINO BOARD ON %s\n', Cfg.Hardware.Arduino.comPort.port);
 
 %    s = serial('COM4', 'BaudRate', 9600);
 
-Cfg.hardware.Arduino.hSerial =...
-    serial(Cfg.hardware.Arduino.comPort.port,...
-    'BaudRate', Cfg.hardware.Arduino.comPort.baudRate);
-fopen(Cfg.hardware.Arduino.hSerial);
-Cfg.hardware.Arduino.hSerial
-Cfg.hardware.Arduino.useArduino = 1;
+Cfg.Hardware.Arduino.hSerial =...
+    serial(Cfg.Hardware.Arduino.comPort.port,...
+    'BaudRate', Cfg.Hardware.Arduino.comPort.baudRate);
+fopen(Cfg.Hardware.Arduino.hSerial);
+Cfg.Hardware.Arduino.hSerial
+Cfg.Hardware.Arduino.useArduino = 1;
 
 
 %% InitParallelPortOutput
 function Cfg = InitParallelPortOutput(Cfg)
-if ~isfield(Cfg, 'hardware'), Cfg.hardware = []; else end
-if ~isfield(Cfg.hardware, 'parallel'), Cfg.hardware.parallel = []; else end
-if ~isfield(Cfg.hardware.parallel, 'ON'), Cfg.hardware.parallel.ON = 0; Cfg.hardware.parallel.OFF = 1;else end
+if ~isfield(Cfg, 'Hardware'), Cfg.Hardware = []; else end
+if ~isfield(Cfg.Hardware, 'parallel'), Cfg.Hardware.parallel = []; else end
+if ~isfield(Cfg.Hardware.parallel, 'ON'), Cfg.Hardware.parallel.ON = 0; Cfg.Hardware.parallel.OFF = 1;else end
 
 fprintf(1, 'INITIALIZING PARALLEL PORT ...\n');
 
 
 % OPEN PARPORT
-Cfg.hardware.DigitalOutput.mydio = digitalio('parallel');
+Cfg.Hardware.DigitalOutput.mydio = digitalio('parallel');
 
 % SET THE HIGHEST SPEED POSSIBLE
-set(Cfg.hardware.DigitalOutput.mydio, 'TimerPeriod', 0.001)
+set(Cfg.Hardware.DigitalOutput.mydio, 'TimerPeriod', 0.001)
 
 %SUGGESTED BY AL
 %CHECK!
-Cfg.hardware.parallel.mydio = digitalio('parallel');
-set(Cfg.hardware.parallel.mydio, 'TimerPeriod', 0.001)
-addline(Cfg.hardware.parallel.mydio, 0:7, 'out', 'TriggerPort')
-Cfg.hardware.parallel.dioinfos = getvalue(Cfg.hardware.parallel.mydio)
+Cfg.Hardware.parallel.mydio = digitalio('parallel');
+set(Cfg.Hardware.parallel.mydio, 'TimerPeriod', 0.001)
+addline(Cfg.Hardware.parallel.mydio, 0:7, 'out', 'TriggerPort')
+Cfg.Hardware.parallel.dioinfos = getvalue(Cfg.Hardware.parallel.mydio)
 
 %
 % PortID Pins         Description
@@ -2235,25 +2237,25 @@ Cfg.hardware.parallel.dioinfos = getvalue(Cfg.hardware.parallel.mydio)
 % First Line of Port ZERO, i.e. PIN2, has LineID 1
 
 % SET PORT AS AN OUTPUT
-addline(Cfg.hardware.DigitalOutput.mydio, 0:7, 'out', 'TriggerPort')
+addline(Cfg.Hardware.DigitalOutput.mydio, 0:7, 'out', 'TriggerPort')
 
-%Cfg.hardware.parallel.ON=0; Cfg.hardware.parallel.OFF=1; %Reverse Logic
+%Cfg.Hardware.parallel.ON=0; Cfg.Hardware.parallel.OFF=1; %Reverse Logic
 
-Cfg.hardware.DigitalOutput.dioinfos = getvalue(Cfg.hardware.parallel.mydio); %#ok<NOPRT>
+Cfg.Hardware.DigitalOutput.dioinfos = getvalue(Cfg.Hardware.parallel.mydio); %#ok<NOPRT>
 fprintf(1, 'DONE\n');
 
 
 
 function Cfg = InitNidaqOutput(Cfg)
-if ~isfield(Cfg, 'hardware'), Cfg.hardware = []; else end
-if ~isfield(Cfg.hardware, 'nidaq'), Cfg.hardware.nidaq = []; else end
-if ~isfield(Cfg.hardware.nidaq, 'ON'), Cfg.hardware.nidaq.ON = 0; Cfg.hardware.nidaq.OFF = 1;else end
+if ~isfield(Cfg, 'Hardware'), Cfg.Hardware = []; else end
+if ~isfield(Cfg.Hardware, 'nidaq'), Cfg.Hardware.nidaq = []; else end
+if ~isfield(Cfg.Hardware.nidaq, 'ON'), Cfg.Hardware.nidaq.ON = 0; Cfg.Hardware.nidaq.OFF = 1;else end
 
 fprintf(1, 'INITIALIZING NATIONAL INSTRUMENTS CARD...\n');
 % OPEN PARPORT
-Cfg.hardware.DigitalOutput.mydio = digitalio('nidaq','Dev2');
+Cfg.Hardware.DigitalOutput.mydio = digitalio('nidaq','Dev2');
 % SET THE HIGHEST SPEED POSSIBLE
-%set(Cfg.hardware.parallel.mydio, 'TimerPeriod', 0.001)
+%set(Cfg.Hardware.parallel.mydio, 'TimerPeriod', 0.001)
 
 %
 % PortID Pins         Description
@@ -2265,42 +2267,42 @@ Cfg.hardware.DigitalOutput.mydio = digitalio('nidaq','Dev2');
 % First Line of Port ZERO, i.e. PIN2, has LineID 1
 
 % SET PORT AS AN OUTPUT
-addline(Cfg.hardware.DigitalOutput.mydio, 0:7, 'out', 'TriggerPort')
+addline(Cfg.Hardware.DigitalOutput.mydio, 0:7, 'out', 'TriggerPort')
 
-%Cfg.hardware.parallel.ON=0; Cfg.hardware.parallel.OFF=1; %Reverse Logic
+%Cfg.Hardware.parallel.ON=0; Cfg.Hardware.parallel.OFF=1; %Reverse Logic
 
-Cfg.hardware.DigitalOutput.dioinfos = getvalue(Cfg.hardware.DigitalOutput.mydio) %#ok<NOPRT>
+Cfg.Hardware.DigitalOutput.dioinfos = getvalue(Cfg.Hardware.DigitalOutput.mydio) %#ok<NOPRT>
 %THIS ENSURES A PREDEFINED STATE AND ALSO THAT ASF_setTrigger is loaded
 ASF_setTrigger(Cfg, 0);
 
 fprintf(1, 'DONE\n');
 
 function Cfg = InitSerialOutput(Cfg)
-fprintf('INITIALIZING SOME OTHER SERIAL OUTPUT BOARD ON %s\n', Cfg.hardware.Serial.comPort.port);
+fprintf('INITIALIZING SOME OTHER SERIAL OUTPUT BOARD ON %s\n', Cfg.Hardware.Serial.comPort.port);
 
 %    s = serial('COM4', 'BaudRate', 9600);
 
-Cfg.hardware.Serial.hSerial =...
-    serial(Cfg.hardware.Serial.comPort.port,...
-    'BaudRate', Cfg.hardware.Serial.comPort.baudRate);
-fopen(Cfg.hardware.Serial.hSerial);
-Cfg.hardware.Serial.hSerial
-Cfg.hardware.Serial.useSerialOut = 1;
+Cfg.Hardware.Serial.hSerial =...
+    serial(Cfg.Hardware.Serial.comPort.port,...
+    'BaudRate', Cfg.Hardware.Serial.comPort.baudRate);
+fopen(Cfg.Hardware.Serial.hSerial);
+Cfg.Hardware.Serial.hSerial
+Cfg.Hardware.Serial.useSerialOut = 1;
 
 
 
 %% InitParallelPortInput
 function Cfg = InitParallelPortInput(Cfg)
-if ~isfield(Cfg, 'hardware'), Cfg.hardware = []; else end
-if ~isfield(Cfg.hardware, 'parallel'), Cfg.hardware.parallel = []; else end
-if ~isfield(Cfg.hardware.parallel, 'ON'), Cfg.hardware.parallel.ON = 0; Cfg.hardware.parallel.OFF = 1;else end
+if ~isfield(Cfg, 'Hardware'), Cfg.Hardware = []; else end
+if ~isfield(Cfg.Hardware, 'parallel'), Cfg.Hardware.parallel = []; else end
+if ~isfield(Cfg.Hardware.parallel, 'ON'), Cfg.Hardware.parallel.ON = 0; Cfg.Hardware.parallel.OFF = 1;else end
 
 fprintf(1, 'INITIALIZING PARALLEL PORT FOR INPUT\n');
 % OPEN PARPORT
-Cfg.hardware.parallel.mydio_in = digitalio('parallel');
+Cfg.Hardware.parallel.mydio_in = digitalio('parallel');
 
 % SET THE HIGHEST SPEED POSSIBLE
-set(Cfg.hardware.parallel.mydio_in, 'TimerPeriod', 0.001)
+set(Cfg.Hardware.parallel.mydio_in, 'TimerPeriod', 0.001)
 
 %
 % PortID Pins         Description
@@ -2312,27 +2314,27 @@ set(Cfg.hardware.parallel.mydio_in, 'TimerPeriod', 0.001)
 % First Line of Port ZERO, i.e. PIN2, has LineID 1
 
 % SET PIN1 AS AN OUTPUT
-% addline(Cfg.hardware.parallel.mydio, 13, 'out','OutPutLine')
+% addline(Cfg.Hardware.parallel.mydio, 13, 'out','OutPutLine')
 
 % SET PIN2 AS AN OUTPUT
-%addline(Cfg.hardware.parallel.mydio, 1, 'out','OutPutLine')
+%addline(Cfg.Hardware.parallel.mydio, 1, 'out','OutPutLine')
 
 % SET PORT AS AN OUTPUT
-%addline(Cfg.hardware.parallel.mydio, 0:7, 'out', 'TriggerPort')
+%addline(Cfg.Hardware.parallel.mydio, 0:7, 'out', 'TriggerPort')
 
 % SET PORT AS AN INPUT AND OUTPUT
-addline(Cfg.hardware.parallel.mydio_in, 0:7, 'In', 'LuminaPort') %MAYBE 8:12 PINS [10:13, 15]
+addline(Cfg.Hardware.parallel.mydio_in, 0:7, 'In', 'LuminaPort') %MAYBE 8:12 PINS [10:13, 15]
 
-%Cfg.hardware.parallel.ON=0; Cfg.hardware.parallel.OFF=1; %Reverse Logic
+%Cfg.Hardware.parallel.ON=0; Cfg.Hardware.parallel.OFF=1; %Reverse Logic
 
-Cfg.hardware.parallel.dioinfos = getvalue(Cfg.hardware.parallel.mydio_in) %#ok<NOPRT>
+Cfg.Hardware.parallel.dioinfos = getvalue(Cfg.Hardware.parallel.mydio_in) %#ok<NOPRT>
 fprintf(1, 'DONE\n');
 
 % %% ***TRIGGERING***
 % %% setTrigger
 % function setTrigger(Cfg, TriggerVal)
 % if Cfg.issueTriggers
-%     putvalue(Cfg.hardware.DigitalOutput.mydio.TriggerPort, TriggerVal);
+%     putvalue(Cfg.Hardware.DigitalOutput.mydio.TriggerPort, TriggerVal);
 % end
 
 
@@ -2343,9 +2345,9 @@ fprintf(1, 'DONE\n');
 % Screen('Flip', windowPtr);
 % switch Cfg.synchToScannerPort
 %     case 'PARALLEL'
-%         WaitForScannerSynchParallel(Cfg.hardware.parallel.mydio_in.LuminaPort, Cfg.scannerSynchTimeOutMs);
+%         WaitForScannerSynchParallel(Cfg.Hardware.parallel.mydio_in.LuminaPort, Cfg.scannerSynchTimeOutMs);
 %     case 'SERIAL'
-%         WaitForScannerSynchSerial(Cfg.hardware.serial.oSerial, Cfg.scannerSynchTimeOutMs)
+%         WaitForScannerSynchSerial(Cfg.Hardware.serial.oSerial, Cfg.scannerSynchTimeOutMs)
 %     case 'SIMULATE'
 %         WaitForScannerSynchSimulated(Cfg, windowPtr, Cfg.scannerSynchTimeOutMs);
 % end
