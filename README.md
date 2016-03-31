@@ -4,7 +4,7 @@ asf is a tool for presenting visual, auditory, and tactile stimuli in behavioura
 ## Introductory Material
 ASF is described in 
 Schwarzbach, J. (2011). A simple framework (ASF) for behavioral
-and neuroimaging experiments based on the psychophysics toolbox for MATLAB. Behav Res 43, 1194-1201.
+and neuroimaging experiments based on the psychophysics toolbox for MATLAB. Behav Res 43, 1194-1201. [pdf] (https://github.com/jvschw/asf/blob/master/documentation/Schwarzbach%202011%20BehavResMeth%20ASF.pdf)
 
 ## Website
 http://jvschw.github.io/asf/
