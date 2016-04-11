@@ -26,7 +26,7 @@ cfg.useOsc = 0;
 AssertOpenGL;
 
 if cfg.useOsc
-    s = serial('COM4', 'BaudRate', 9600);
+    s = serial('COM4', 'baudRate', 9600);
     fopen(s)
     
     s

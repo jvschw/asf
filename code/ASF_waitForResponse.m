@@ -337,16 +337,16 @@ end
 buttons(4) = 0;
 t0 = GetSecs;
 t1 = t0;
-% while ((~Cfg.Hardware.serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
-%     buttons = fgets(Cfg.Hardware.serial.oSerial);
+% while ((~Cfg.Hardware.Serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
+%     buttons = fgets(Cfg.Hardware.Serial.oSerial);
 %     
 %     t1 = GetSecs;
 % end
 
 while ((t1 - t0) < timeout) % wait for press
-    if Cfg.Hardware.serial.oSerial.BytesAvailable
+    if Cfg.Hardware.Serial.oSerial.BytesAvailable
         
-        sbuttons = str2num(fscanf(Cfg.Hardware.serial.oSerial)); %#ok<ST2NM>
+        sbuttons = str2num(fscanf(Cfg.Hardware.Serial.oSerial)); %#ok<ST2NM>
         
         %IF ONLY A SINGLE BUTTON HAS BEEN PRESSED, sbuttons WILL BE BETWEEN
         %1 AND 4, IF SEVERAL BUTTONS HAVE BEEN PRESSED, E.G. 1 AND 4 THE
@@ -371,8 +371,8 @@ while ((t1 - t0) < timeout) % wait for press
         end
 
 %         %CLEAN UP IN CASE MONKEY GOES WILD
-%         while Cfg.Hardware.serial.oSerial.BytesAvailable
-%             junk = fscanf(Cfg.Hardware.serial.oSerial);
+%         while Cfg.Hardware.Serial.oSerial.BytesAvailable
+%             junk = fscanf(Cfg.Hardware.Serial.oSerial);
 %         end
         
     end
@@ -391,16 +391,16 @@ buttons(4) = 0;
 t0 = GetSecs;
 t1 = t0;
 return
-% while ((~Cfg.Hardware.serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
-%     buttons = fgets(Cfg.Hardware.serial.oSerial);
+% while ((~Cfg.Hardware.Serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
+%     buttons = fgets(Cfg.Hardware.Serial.oSerial);
 %     
 %     t1 = GetSecs;
 % end
 
 while ((t1 - t0) < timeout) % wait for press
-    if Cfg.Hardware.serial.oSerial.BytesAvailable
+    if Cfg.Hardware.Serial.oSerial.BytesAvailable
         
-        sbuttons = str2num(fscanf(Cfg.Hardware.serial.oSerial)); %#ok<ST2NM>
+        sbuttons = str2num(fscanf(Cfg.Hardware.Serial.oSerial)); %#ok<ST2NM>
         
         %IF ONLY A SINGLE BUTTON HAS BEEN PRESSED, sbuttons WILL BE BETWEEN
         %1 AND 4, IF SEVERAL BUTTONS HAVE BEEN PRESSED, E.G. 1 AND 4 THE
@@ -425,8 +425,8 @@ while ((t1 - t0) < timeout) % wait for press
         end
 
 %         %CLEAN UP IN CASE MONKEY GOES WILD
-%         while Cfg.Hardware.serial.oSerial.BytesAvailable
-%             junk = fscanf(Cfg.Hardware.serial.oSerial);
+%         while Cfg.Hardware.Serial.oSerial.BytesAvailable
+%             junk = fscanf(Cfg.Hardware.Serial.oSerial);
 %         end
         
     end

@@ -24,7 +24,7 @@ function results = ASF_soundTestPsychPortAudio
 % Running on PTB-3? Abort otherwise.
 AssertOpenGL;
 
-s = serial('COM4', 'BaudRate', 9600);
+s = serial('COM4', 'baudRate', 9600);
 fopen(s)
 
 s

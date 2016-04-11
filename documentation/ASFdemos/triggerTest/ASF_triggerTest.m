@@ -30,7 +30,7 @@ switch Cfg.environment
         
         %ARDUINO EMULATED
         Cfg.serialPortName = 'COM4';
-        Cfg.hardware.serial.BaudRate = 9600;
+        Cfg.Hardware.Serial.baudRate = 9600;
         Cfg.responseDevice = 'LUMINASERIAL';
         Cfg.synchToScanner = 1;
         Cfg.synchToScannerPort = 'SERIAL';

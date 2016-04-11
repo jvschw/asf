@@ -90,7 +90,7 @@ if  ~isempty(out)
     %MAYBE I NEED TO INVALIDATE THE HANDLE TO SERIAL PORT
     %SUCH AS
     %delete(cfg.Hardware.serial.oSerial)
-    Cfg.Hardware.serial = [];
+    Cfg.Hardware.Serial = [];
 end
 
 %ANY TAKS RUNNING ON THE NI CARD?

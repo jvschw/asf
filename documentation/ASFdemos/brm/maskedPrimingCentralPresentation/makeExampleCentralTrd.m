@@ -40,7 +40,7 @@ Design.nReplicationsPerCondition = 10;
 %SIMPLE VARIATION OF TRIAL ONSET ASYNCHRONIES FOR fMRI 
 %WILL ONLY BECOME EFFECTIVE WHEN CALLING ASF WITH 
 %Cfg.useTrialOnsetTimes = 1
-Design.jitteredTrialOnsetAsynchronies = [2:0.5:7]; %MIN, STEP, MAX
+Design.jitteredTrialOnsetAsynchronies = 2:0.5:7; %MIN, STEP, MAX
 
 %PICTURE CODES MUST REFLECT ORDER IN STD FILE
 PictureCodes.empty = 1;

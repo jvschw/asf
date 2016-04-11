@@ -1,14 +1,14 @@
 function ASF_monitorLumina
-s = serial('COM4', 'BaudRate', 9600);
-fopen(s)
+s = serial('COM4', 'baudRate', 9600);
+fopen(s);
 
 t0 = GetSecs;
 timeoutMilliSeconds = 2000;
 for i = 1:10
     WaitForScannerSynchSerial(s, timeoutMilliSeconds)
-    fprintf(1, '%8.3f\n', GetSecs - t0)
+    fprintf(1, '%8.3f\n', GetSecs - t0);
 end
-fclose(s)
+fclose(s);
 delete(s)
 
 % function WaitForScannerSynchSerial(hSerial, timeoutMilliSeconds)

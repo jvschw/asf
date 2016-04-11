@@ -32,23 +32,23 @@ switch Cfg.responseDevice
     
      case 'LUMINASERIAL'
         if ~isfield(Cfg, 'Hardware'), Cfg.Hardware = []; else end
-        if ~isfield(Cfg.Hardware, 'serial'), Cfg.Hardware.serial = []; else end
-        if ~isfield(Cfg.Hardware.serial, 'BaudRate'), Cfg.Hardware.serial.BaudRate = 115200;else end 
+        if ~isfield(Cfg.Hardware, 'serial'), Cfg.Hardware.Serial = []; else end
+        if ~isfield(Cfg.Hardware.Serial, 'baudRate'), Cfg.Hardware.Serial.baudRate = 115200;else end 
         
         fprintf(1, 'CREATING SERIAL OBJECT ... ');
-        Cfg.Hardware.serial.oSerial = serial('COM1', 'Tag', 'SerialResponseBox', 'BaudRate', Cfg.Hardware.serial.BaudRate);
-        set(Cfg.Hardware.serial.oSerial, 'Timeout', 0.001) %RECONSIDER
-        Cfg.Hardware.serial.oSerial.Terminator = '';
-        set(Cfg.Hardware.serial.oSerial,'InputBufferSize',128)
-        %Cfg.Hardware.serial.oSerial.ReadAsyncMode = 'manual';%'continuous';
-        %Cfg.Hardware.serial.ClassSerial = class(Cfg.Hardware.serial, 'SerialResponseBox');
+        Cfg.Hardware.Serial.oSerial = serial('COM1', 'Tag', 'SerialResponseBox', 'baudRate', Cfg.Hardware.Serial.baudRate);
+        set(Cfg.Hardware.Serial.oSerial, 'Timeout', 0.001) %RECONSIDER
+        Cfg.Hardware.Serial.oSerial.Terminator = '';
+        set(Cfg.Hardware.Serial.oSerial,'InputBufferSize',128)
+        %Cfg.Hardware.Serial.oSerial.ReadAsyncMode = 'manual';%'continuous';
+        %Cfg.Hardware.Serial.ClassSerial = class(Cfg.Hardware.Serial, 'SerialResponseBox');
         %dummy = warning( 'off', 'instrument:fscanf:unsuccessfulRead')
         warning off all %THIS IS NASTY!!! We do this because of timeout warning
         fprintf(1, 'DONE\n');
-        fprintf(1, 'STARTING SERIAL COMMUNICATION WITH SERIAL RESPONSE BOX (BAUD RATE: %d) ... ', Cfg.Hardware.serial.BaudRate);
-        fopen(Cfg.Hardware.serial.oSerial);
+        fprintf(1, 'STARTING SERIAL COMMUNICATION WITH SERIAL RESPONSE BOX (BAUD RATE: %d) ... ', Cfg.Hardware.Serial.baudRate);
+        fopen(Cfg.Hardware.Serial.oSerial);
         fprintf('DONE\n')
-        %Cfg.Hardware.serial.oSerial.BytesAvailable
+        %Cfg.Hardware.Serial.oSerial.BytesAvailable
     case  'KEYBOARD'
         fprintf(1, 'USING KEYBOARD AS RESPONSE DEVICE\n');
 

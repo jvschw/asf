@@ -1089,43 +1089,43 @@ switch Cfg.responseDevice
         
     case 'LUMINASERIAL'
         if ~isfield(Cfg, 'Hardware'), Cfg.Hardware = []; else end
-        if ~isfield(Cfg.Hardware, 'serial'), Cfg.Hardware.serial = []; else end
-        if ~isfield(Cfg.Hardware.serial, 'BaudRate'), Cfg.Hardware.serial.BaudRate = 115200;else end
+        if ~isfield(Cfg.Hardware, 'Serial'), Cfg.Hardware.Serial = []; else end
+        if ~isfield(Cfg.Hardware.Serial, 'baudRate'), Cfg.Hardware.Serial.baudRate = 115200;else end
         
         fprintf(1, 'CREATING SERIAL OBJECT ... ');
-        Cfg.Hardware.serial.oSerial = serial(Cfg.serialPortName, 'Tag', 'SerialResponseBox', 'BaudRate', Cfg.Hardware.serial.BaudRate);
-        set(Cfg.Hardware.serial.oSerial, 'Timeout', 0.001) %RECONSIDER
-        Cfg.Hardware.serial.oSerial.Terminator = '';
-        set(Cfg.Hardware.serial.oSerial,'InputBufferSize',128)
-        %Cfg.Hardware.serial.oSerial.ReadAsyncMode = 'manual';%'continuous';
-        %Cfg.Hardware.serial.ClassSerial = class(Cfg.Hardware.serial, 'SerialResponseBox');
+        Cfg.Hardware.Serial.oSerial = serial(Cfg.serialPortName, 'Tag', 'SerialResponseBox', 'baudRate', Cfg.Hardware.Serial.baudRate);
+        set(Cfg.Hardware.Serial.oSerial, 'Timeout', 0.001) %RECONSIDER
+        Cfg.Hardware.Serial.oSerial.Terminator = '';
+        set(Cfg.Hardware.Serial.oSerial,'InputBufferSize',128)
+        %Cfg.Hardware.Serial.oSerial.ReadAsyncMode = 'manual';%'continuous';
+        %Cfg.Hardware.Serial.ClassSerial = class(Cfg.Hardware.Serial, 'SerialResponseBox');
         %dummy = warning( 'off', 'instrument:fscanf:unsuccessfulRead')
         warning off all %THIS IS NASTY!!! We do this because of timeout warning
         fprintf(1, 'DONE\n');
-        fprintf(1, 'STARTING SERIAL COMMUNICATION WITH SERIAL RESPONSE BOX (BAUD RATE: %d) ... ', Cfg.Hardware.serial.BaudRate);
-        fopen(Cfg.Hardware.serial.oSerial);
+        fprintf(1, 'STARTING SERIAL COMMUNICATION WITH SERIAL RESPONSE BOX (BAUD RATE: %d) ... ', Cfg.Hardware.Serial.baudRate);
+        fopen(Cfg.Hardware.Serial.oSerial);
         fprintf('DONE\n');
-        %Cfg.Hardware.serial.oSerial.BytesAvailable
+        %Cfg.Hardware.Serial.oSerial.BytesAvailable
         
     case 'ARDUINOSERIAL' %THIS IS A BAD EMULATION OF THE LUMINA BOX IN SERIAL MODE
         if ~isfield(Cfg, 'Hardware'), Cfg.Hardware = []; else end
-        if ~isfield(Cfg.Hardware, 'serial'), Cfg.Hardware.serial = []; else end
-        if ~isfield(Cfg.Hardware.serial, 'BaudRate'), Cfg.Hardware.serial.BaudRate = 9600;else end
+        if ~isfield(Cfg.Hardware, 'Serial'), Cfg.Hardware.Serial = []; else end
+        if ~isfield(Cfg.Hardware.Serial, 'baudRate'), Cfg.Hardware.Serial.baudRate = 9600;else end
         
         fprintf(1, 'CREATING SERIAL OBJECT ... ');
-        Cfg.Hardware.serial.oSerial = serial(Cfg.serialPortName, 'Tag', 'SerialResponseBox', 'BaudRate', Cfg.Hardware.serial.BaudRate);
-        set(Cfg.Hardware.serial.oSerial, 'Timeout', 0.001) %RECONSIDER
-        Cfg.Hardware.serial.oSerial.Terminator = 'LF/CR';%JVS
-        set(Cfg.Hardware.serial.oSerial,'InputBufferSize',128)
-        %Cfg.Hardware.serial.oSerial.ReadAsyncMode = 'manual';%'continuous';
-        %Cfg.Hardware.serial.ClassSerial = class(Cfg.Hardware.serial, 'SerialResponseBox');
+        Cfg.Hardware.Serial.oSerial = serial(Cfg.serialPortName, 'Tag', 'SerialResponseBox', 'baudRate', Cfg.Hardware.Serial.baudRate);
+        set(Cfg.Hardware.Serial.oSerial, 'Timeout', 0.001) %RECONSIDER
+        Cfg.Hardware.Serial.oSerial.Terminator = 'LF/CR';%JVS
+        set(Cfg.Hardware.Serial.oSerial,'InputBufferSize',128)
+        %Cfg.Hardware.Serial.oSerial.ReadAsyncMode = 'manual';%'continuous';
+        %Cfg.Hardware.Serial.ClassSerial = class(Cfg.Hardware.Serial, 'SerialResponseBox');
         %dummy = warning( 'off', 'instrument:fscanf:unsuccessfulRead')
         warning off all %THIS IS NASTY!!! We do this because of timeout warning
         fprintf(1, 'DONE\n');
-        fprintf(1, 'STARTING SERIAL COMMUNICATION WITH SERIAL RESPONSE BOX (BAUD RATE: %d) ... ', Cfg.Hardware.serial.BaudRate);
-        fopen(Cfg.Hardware.serial.oSerial);
+        fprintf(1, 'STARTING SERIAL COMMUNICATION WITH SERIAL RESPONSE BOX (BAUD RATE: %d) ... ', Cfg.Hardware.Serial.baudRate);
+        fopen(Cfg.Hardware.Serial.oSerial);
         fprintf('DONE\n');
-        %Cfg.Hardware.serial.oSerial.BytesAvailable
+        %Cfg.Hardware.Serial.oSerial.BytesAvailable
           
     case  'KEYBOARD'
         fprintf(1, 'USING KEYBOARD AS RESPONSE DEVICE\n');
@@ -1846,24 +1846,24 @@ end
 % buttons(4) = 0;
 % t0 = GetSecs;
 % t1 = t0;
-% % while ((~Cfg.Hardware.serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
-% %     buttons = fgets(Cfg.Hardware.serial.oSerial);
+% % while ((~Cfg.Hardware.Serial.oSerial.BytesAvailable) && (t1 - t0)<timeout) % wait for press
+% %     buttons = fgets(Cfg.Hardware.Serial.oSerial);
 % %
 % %     t1 = GetSecs;
 % % end
 %
 % while ((t1 - t0) < timeout) % wait for press
-%     if Cfg.Hardware.serial.oSerial.BytesAvailable
-%         %buttons = fgets(Cfg.Hardware.serial.oSerial);
-%         sbuttons = str2num(fscanf(Cfg.Hardware.serial.oSerial)); %#ok<ST2NM>
+%     if Cfg.Hardware.Serial.oSerial.BytesAvailable
+%         %buttons = fgets(Cfg.Hardware.Serial.oSerial);
+%         sbuttons = str2num(fscanf(Cfg.Hardware.Serial.oSerial)); %#ok<ST2NM>
 %         if sbuttons < 5
 %             %TRANSFORM INTO A 4 ELEMENT VECTOR
 %             buttons(sbuttons) = 1;
 %         end
 %
 % %         %CLEAN UP IN CASE MONKEY GOES WILD
-% %         while Cfg.Hardware.serial.oSerial.BytesAvailable
-% %             junk = fscanf(Cfg.Hardware.serial.oSerial);
+% %         while Cfg.Hardware.Serial.oSerial.BytesAvailable
+% %             junk = fscanf(Cfg.Hardware.Serial.oSerial);
 % %         end
 %
 %
@@ -1997,7 +1997,7 @@ end
 %     fclose(out);
 %     %MAYBE I NEED TO INVALIDATE THE HANDLE TO SERIAL PORT
 %     %SUCH AS
-%     %delete(Cfg.Hardware.serial.oSerial)
+%     %delete(Cfg.Hardware.Serial.oSerial)
 % end
 %
 % %FIND ALL DIO STUFF THATY WE MAY HAVE CREATED
@@ -2195,11 +2195,11 @@ fprintf(1, 'DONE\n');
 function Cfg = InitArduinoOutput(Cfg)
 fprintf('INITIALIZING ARDUINO BOARD ON %s\n', Cfg.Hardware.Arduino.comPort.port);
 
-%    s = serial('COM4', 'BaudRate', 9600);
+%    s = serial('COM4', 'baudRate', 9600);
 
 Cfg.Hardware.Arduino.hSerial =...
     serial(Cfg.Hardware.Arduino.comPort.port,...
-    'BaudRate', Cfg.Hardware.Arduino.comPort.baudRate);
+    'baudRate', Cfg.Hardware.Arduino.comPort.baudRate);
 fopen(Cfg.Hardware.Arduino.hSerial);
 Cfg.Hardware.Arduino.hSerial
 Cfg.Hardware.Arduino.useArduino = 1;
@@ -2280,11 +2280,11 @@ fprintf(1, 'DONE\n');
 function Cfg = InitSerialOutput(Cfg)
 fprintf('INITIALIZING SOME OTHER SERIAL OUTPUT BOARD ON %s\n', Cfg.Hardware.Serial.comPort.port);
 
-%    s = serial('COM4', 'BaudRate', 9600);
+%    s = serial('COM4', 'baudRate', 9600);
 
 Cfg.Hardware.Serial.hSerial =...
     serial(Cfg.Hardware.Serial.comPort.port,...
-    'BaudRate', Cfg.Hardware.Serial.comPort.baudRate);
+    'baudRate', Cfg.Hardware.Serial.comPort.baudRate);
 fopen(Cfg.Hardware.Serial.hSerial);
 Cfg.Hardware.Serial.hSerial
 Cfg.Hardware.Serial.useSerialOut = 1;
@@ -2347,7 +2347,7 @@ fprintf(1, 'DONE\n');
 %     case 'PARALLEL'
 %         WaitForScannerSynchParallel(Cfg.Hardware.parallel.mydio_in.LuminaPort, Cfg.scannerSynchTimeOutMs);
 %     case 'SERIAL'
-%         WaitForScannerSynchSerial(Cfg.Hardware.serial.oSerial, Cfg.scannerSynchTimeOutMs)
+%         WaitForScannerSynchSerial(Cfg.Hardware.Serial.oSerial, Cfg.scannerSynchTimeOutMs)
 %     case 'SIMULATE'
 %         WaitForScannerSynchSimulated(Cfg, windowPtr, Cfg.scannerSynchTimeOutMs);
 % end
