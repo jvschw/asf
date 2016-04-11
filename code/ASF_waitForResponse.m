@@ -73,14 +73,14 @@ t0 = GetSecs;
 
 %VOICEKEY
 % %START ACQUISITION
-% PsychPortAudio('Start', Cfg.audio.pahandle, 0, 0, 1); 
+% PsychPortAudio('Start', Cfg.Audio.pahandle, 0, 0, 1); 
 % %THE THIRD PARAMETER (waitForStart) IS SET TO 1, THIS MEANS THAT THIS
 % %FUNCTION ONLY RETURNS AFTER ACQUISITION HAS REALLY STARTED, WHICH ALLOWS
 % %ASSESSING THE DELAY OF THE ACQUISITION. WE RETURN THE ACTUAL START TIME AS REACTION TIME
 % t1 = GetSecs;
 
 %START ACQUISITION
-PsychPortAudio('Start', Cfg.audio.pahandle, 0, 0, 0); 
+PsychPortAudio('Start', Cfg.Audio.pahandle, 0, 0, 0); 
 %THE THIRD PARAMETER (waitForStart) IS SET TO 0, THIS MEANS THAT THIS
 %FUNCTION IMMEDIATELY RETURNS. WE RETRIEVE THE ACTUAL START TIME OF THE FIRST SAMPLE WHEN WE CALL PsychPort('GetAudio')
 t1 = GetSecs;
@@ -90,15 +90,15 @@ t1 = GetSecs;
 % WaitSecs(timeout);
 % 
 % % Stop sound capture: End of response period.
-% PsychPortAudio('Stop', Cfg.audio.pahandle);
+% PsychPortAudio('Stop', Cfg.Audio.pahandle);
 % 
 % % Fetch all about x seconds of audiodata at once:
-% [audiodata offset overflow tCaptureStart]= PsychPortAudio('GetAudioData', Cfg.audio.pahandle);
+% [audiodata offset overflow tCaptureStart]= PsychPortAudio('GetAudioData', Cfg.Audio.pahandle);
 % 
-% this_response.wavname = fullfile(Cfg.audio.outputPath, sprintf('%s_trial_%05d.wav', Cfg.name, Cfg.currentTrialNumber));
+% this_response.wavname = fullfile(Cfg.Audio.outputPath, sprintf('%s_trial_%05d.wav', Cfg.name, Cfg.currentTrialNumber));
 % fprintf(1, 'Writing %s ... ', this_response.wavname);
 % %MAKE SURE TO WRITE WAV FILES AS [nSamples, nChannels]
-% wavwrite(audiodata', Cfg.audio.f, Cfg.audio.nBits, this_response.wavname);
+% wavwrite(audiodata', Cfg.Audio.f, Cfg.Audio.nBits, this_response.wavname);
 % fprintf(1, 'Done.\n');
 
 function [keyCode, t0, t1] = WaitForVoiceKey(Cfg, timeout)
@@ -109,30 +109,30 @@ t1 = t0;
 keyCode = NaN;
 
 %VOICEKEY
-record(Cfg.audio.recorder, timeout);       %RECORD for two seconds
+record(Cfg.Audio.recorder, timeout);       %RECORD for two seconds
 %MAKE SURE WE ARE NOT RECORDING ANYMORE
-while(isrecording(Cfg.audio.recorder))
+while(isrecording(Cfg.Audio.recorder))
 end
 %GET DATA
-audioarray = getaudiodata(Cfg.audio.recorder);
+audioarray = getaudiodata(Cfg.Audio.recorder);
 this_response.key = [];
 this_response.wavname = sprintf('%s_trial_%05d.wav', Cfg.name, Cfg.currentTrialNumber);
 startstim = 0;
-t = (0:length(audioarray)-1)./Cfg.audio.f;
+t = (0:length(audioarray)-1)./Cfg.Audio.f;
 audioarray_stimlocked = audioarray(t >= startstim);
-t2 =    (0:length(audioarray_stimlocked)-1)./Cfg.audio.f;
+t2 =    (0:length(audioarray_stimlocked)-1)./Cfg.Audio.f;
 fprintf(1, 'Writing %s ... ', this_response.wavname);
-wavwrite(audioarray_stimlocked, Cfg.audio.f, Cfg.audio.nBits, this_response.wavname);
+wavwrite(audioarray_stimlocked, Cfg.Audio.f, Cfg.Audio.nBits, this_response.wavname);
 fprintf(1, 'Done.\n');
 
-%rt = handle_audio_data(audioarray, Cfg.audio, 0, this_response.wavname, Cfg.plotVOT)*1000;
+%rt = handle_audio_data(audioarray, Cfg.Audio, 0, this_response.wavname, Cfg.plotVOT)*1000;
 %t1 = t0 + rt;
 
 %% handle_audio_data
 % compute voice onset time from audio data
 function rt = handle_audio_data(audioarray, cfg_audio, startstim, wavname, plotVOT)
-%    wavwrite(audioarray, audio.f, audio.nBits, wavname)
-%    plot((1:length(audioarray))./audio.f, [audioarray, sqrt(audioarray.^2)])
+%    wavwrite(audioarray, Audio.f, Audio.nBits, wavname)
+%    plot((1:length(audioarray))./Audio.f, [audioarray, sqrt(audioarray.^2)])
 %    legend({'data', 'demeaned', 'abs'})
 t = (0:length(audioarray)-1)./cfg_audio.f;
 

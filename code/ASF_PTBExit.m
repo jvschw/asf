@@ -74,7 +74,7 @@ switch Cfg.responseDevice
     case 'VOICEKEYPPA'
         fprintf(1, 'Closing PsychPortAudio ...');
         % Close the audio device:
-        PsychPortAudio('Close', Cfg.audio.pahandle);
+        PsychPortAudio('Close', Cfg.Audio.pahandle);
         fprintf(1, ' DONE.\n');
 end
 

@@ -12,12 +12,12 @@ switch Cfg.responseDevice
         fprintf(1, 'USING VOICE-KEY AS RESPONSE DEVICE\n');
         fprintf(1, '\tINITIALIZING AUDIO CARD FOR VOICE KEY OPERATION...');
         %APPLY DEFAULT SETTINGS UNLESS REQUESTED OTHERWISE
-        if ~isfield(Cfg, 'audio'), Cfg.audio = []; else end
-        if ~isfield(Cfg.audio, 'f'), Cfg.audio.f = 44100; else end
-        if ~isfield(Cfg.audio, 'nBits'),Cfg.audio.nBits = 16; else end
-        if ~isfield(Cfg.audio, 'nChannels'), Cfg.audio.nChannels = 1; else end
+        if ~isfield(Cfg, 'Audio'), Cfg.Audio = []; else end
+        if ~isfield(Cfg.Audio, 'f'), Cfg.Audio.f = 44100; else end
+        if ~isfield(Cfg.Audio, 'nBits'),Cfg.Audio.nBits = 16; else end
+        if ~isfield(Cfg.Audio, 'nChannels'), Cfg.Audio.nChannels = 1; else end
 
-        Cfg.audio.recorder = audiorecorder(Cfg.audio.f, Cfg.audio.nBits, Cfg.audio.nChannels);
+        Cfg.Audio.recorder = audiorecorder(Cfg.Audio.f, Cfg.Audio.nBits, Cfg.Audio.nChannels);
         %set(recorder, 'StartFcn',  'global s; crsRTSStartStream(s, CRS.SS_IMMEDIATE);');
         %we might consider automatically sending a trigger
         fprintf(1, 'DONE\n');

@@ -1041,12 +1041,12 @@ switch Cfg.responseDevice
         fprintf(1, 'USING VOICE-KEY AS RESPONSE DEVICE\n');
         fprintf(1, '\tINITIALIZING AUDIO CARD FOR VOICE KEY OPERATION...');
         %APPLY DEFAULT SETTINGS UNLESS REQUESTED OTHERWISE
-        if ~isfield(Cfg, 'audio'), Cfg.audio = []; else end
-        if ~isfield(Cfg.audio, 'f'), Cfg.audio.f = 44100; else end
-        if ~isfield(Cfg.audio, 'nBits'),Cfg.audio.nBits = 16; else end
-        if ~isfield(Cfg.audio, 'nChannels'), Cfg.audio.nChannels = 1; else end
-        if ~isfield(Cfg.audio, 'outputPath'), Cfg.audio.outputPath = ''; else end
-        Cfg.audio.recorder = audiorecorder(Cfg.audio.f, Cfg.audio.nBits, Cfg.audio.nChannels);
+        if ~isfield(Cfg, 'Audio'), Cfg.Audio = []; else end
+        if ~isfield(Cfg.Audio, 'f'), Cfg.Audio.f = 44100; else end
+        if ~isfield(Cfg.Audio, 'nBits'),Cfg.Audio.nBits = 16; else end
+        if ~isfield(Cfg.Audio, 'nChannels'), Cfg.Audio.nChannels = 1; else end
+        if ~isfield(Cfg.Audio, 'outputPath'), Cfg.Audio.outputPath = ''; else end
+        Cfg.Audio.recorder = audiorecorder(Cfg.Audio.f, Cfg.Audio.nBits, Cfg.Audio.nChannels);
         %set(recorder, 'StartFcn',  'global s; crsRTSStartStream(s, CRS.SS_IMMEDIATE);');
         %we might consider automatically sending a trigger
         fprintf(1, 'DONE\n');
@@ -1058,12 +1058,12 @@ switch Cfg.responseDevice
         InitializePsychSound(1);
         
         %APPLY DEFAULT SETTINGS UNLESS REQUESTED OTHERWISE
-        if ~isfield(Cfg, 'audio'), Cfg.audio = []; else end
-        if ~isfield(Cfg.audio, 'f'), Cfg.audio.f = 44100; else end
-        if ~isfield(Cfg.audio, 'nBits'),Cfg.audio.nBits = 16; else end
-        if ~isfield(Cfg.audio, 'nChannels'), Cfg.audio.nChannels = 2; else end
-        if ~isfield(Cfg.audio, 'outputPath'), Cfg.audio.outputPath = ''; else end
-        if ~isfield(Cfg.audio, 'voiceKeyBufferInSecs'), Cfg.audio.voiceKeyBufferInSecs = 3; else end
+        if ~isfield(Cfg, 'Audio'), Cfg.Audio = []; else end
+        if ~isfield(Cfg.Audio, 'f'), Cfg.Audio.f = 44100; else end
+        if ~isfield(Cfg.Audio, 'nBits'),Cfg.Audio.nBits = 16; else end
+        if ~isfield(Cfg.Audio, 'nChannels'), Cfg.Audio.nChannels = 2; else end
+        if ~isfield(Cfg.Audio, 'outputPath'), Cfg.Audio.outputPath = ''; else end
+        if ~isfield(Cfg.Audio, 'voiceKeyBufferInSecs'), Cfg.Audio.voiceKeyBufferInSecs = 3; else end
         fprintf(1, '\tINITIALIZING PSYCHPORTAUDIO FOR VOICE KEY OPERATION...');
         
         % Open the default audio device [], with mode 2 (== Only audio capture),
@@ -1075,8 +1075,8 @@ switch Cfg.responseDevice
         % low-latency mode, but loosen our requirement to 20 msecs.
         %
         % This returns a handle to the audio device:
-        Cfg.audio.pahandle = PsychPortAudio('Open', [], 2, 2, Cfg.audio.f, Cfg.audio.nChannels, [], 0.02);
-        PsychPortAudio('GetAudioData', Cfg.audio.pahandle, Cfg.audio.voiceKeyBufferInSecs); %MAKE THE DURATION A PARAMETER
+        Cfg.Audio.pahandle = PsychPortAudio('Open', [], 2, 2, Cfg.Audio.f, Cfg.Audio.nChannels, [], 0.02);
+        PsychPortAudio('GetAudioData', Cfg.Audio.pahandle, Cfg.Audio.voiceKeyBufferInSecs); %MAKE THE DURATION A PARAMETER
         
         
     case 'LUMINAPARALLEL'
@@ -1680,7 +1680,7 @@ for iPage = 1:nPages
         StartRTMeasurement = VBLTimestamp;
         
         %VOICEKEY
-        record(Cfg.audio.recorder, 2);       %RECORD for two seconds
+        record(Cfg.Audio.recorder, 2);       %RECORD for two seconds
         
     end
     timing(iPage, 1:6) = [atrial.pageDuration(iPage), VBLTimestamp StimulusOnsetTime FlipTimestamp Missed Beampos];
@@ -1701,13 +1701,13 @@ end
 %COMPUTE VOT
 %***********
 %MAKE SURE WE ARE NOT RECORDING ANYMORE
-while(isrecording(Cfg.audio.recorder))
+while(isrecording(Cfg.Audio.recorder))
 end
 %GET DATA
-audioarray = getaudiodata(Cfg.audio.recorder);
+audioarray = getaudiodata(Cfg.Audio.recorder);
 this_response.key = [];
 this_response.wavname = sprintf('%s_trial_%05d.wav', Cfg.name, Cfg.currentTrialNumber);
-this_response.RT = handle_audio_data(audioarray, Cfg.audio, 0, this_response.wavname, Cfg.plotVOT)*1000;
+this_response.RT = handle_audio_data(audioarray, Cfg.Audio, 0, this_response.wavname, Cfg.plotVOT)*1000;
 
 %PACK INFORMATION ABOUT THIS TRIAL INTO STRUCTURE TrialInfo (THE RETURN ARGUMENT)
 %PLEASE MAKE SURE THAT TrialInfo CONTAINS THE FIELDS:
@@ -1730,8 +1730,8 @@ return
 %% handle_audio_data
 % compute voice onset time from audio data
 function rt = handle_audio_data(audioarray, Cfg_audio, startstim, wavname, plotVOT)
-%    wavwrite(audioarray, audio.f, audio.nBits, wavname)
-%    plot((1:length(audioarray))./audio.f, [audioarray, sqrt(audioarray.^2)])
+%    wavwrite(audioarray, Audio.f, Audio.nBits, wavname)
+%    plot((1:length(audioarray))./Audio.f, [audioarray, sqrt(audioarray.^2)])
 %    legend({'data', 'demeaned', 'abs'})
 t = (0:length(audioarray)-1)./Cfg_audio.f;
 
