@@ -4,7 +4,7 @@ function ExpInfo = ASF_demo1
 
 Cfg.Screen.skipSyncTests = 0;
 Cfg.enableTimingDiagnosis = 1;
-Cfg.hasEndRTonPageInfo = 0; %BACKWARD COMPATIBILITY TO OLD WAY OF DEFINING TRDs
+%Cfg.hasEndRTonPageInfo = 0; %BACKWARD COMPATIBILITY TO OLD WAY OF DEFINING TRDs
 
 %UNCOMMENT FOR FORCING A CERTAIN SCREEN RESOLUTION
 % Cfg.Screen.Resolution.width = 1024;
@@ -12,9 +12,12 @@ Cfg.hasEndRTonPageInfo = 0; %BACKWARD COMPATIBILITY TO OLD WAY OF DEFINING TRDs
 % Cfg.Screen.Resolution.pixelSize = 32;
 % Cfg.Screen.refreshRateHz = 60;
 
-Cfg.environment = 'SONYVAYO-VGN';
+Cfg.environment = 'MAC';
 
 switch Cfg.environment
+    case 'MAC'
+        Cfg.Screen.skipSyncTests = 1;
+        Cfg.Screen.rect = [1, 1, 640, 480];
     case 'SONYVAYO-VGN'
         Cfg.Screen.skipSyncTests = 1;
 %         Cfg.Screen.Resolution.width = 1024;

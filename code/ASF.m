@@ -1,5 +1,5 @@
-function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
-% function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
+function [ExpInfo] = ASF(stimFileName, trialFileName, expName, Cfg)
+% function [ExpInfo] = ASF(stimFileName, trialFileName, expName, Cfg)
 %-------------------------------------------------------------
 % A SIMPLE
 % MULTI PURPOSE PLAYBACK MACHINE FOR PSYCHOPHYSICS EXPERIMENTS
@@ -177,7 +177,11 @@ function [ExpInfo] = ASF(stimNames, trialFileName, expName, Cfg)
 %% ***ASF-MAIN LOOP***
 
 %DEFAULT CONFIGURATION
-Cfg.ASFVersion = 0.54;
+Cfg.ASFVersion = 0.55;
+Cfg.isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+if Cfg.isOctave
+    page_output_immediately(0);
+end
 %BETA FEATURES
 %INSTRUCTION TRIALS
 if ~isfield(Cfg, 'Instruction'), Cfg.Instruction = []; else end
@@ -328,12 +332,12 @@ if isfield(Cfg, 'hardware'), error('RENAME VARIABLE Cfg.hardware TO Cfg.Hardware
 %AT PROGRAM CHECKOUT
 if ~isfield(Cfg, 'enableTimingDiagnosis'), Cfg.enableTimingDiagnosis = 0; else end; %DEFAULT NO TIMING DIAGNOSIS BECAUSE IT CREATES TROUBLE WITH MOST USER SUPPLIED TRIAL FUNCTION
 
-Cfg.stimNames = stimNames; %'stimdef.txt';
-Cfg.trialFileName = trialFileName;%'test.stm';
+Cfg.stimFileName = stimFileName; %'stimdef.std';
+Cfg.trialFileName = trialFileName;%'trialdef.trd';
 Cfg.currentTrialNumber = 0;
 
 
-try
+%try
     %     Normally, only the statements between the TRY and CATCH are executed.
     %     However, if an error occurs while executing any of the statements, the
     %     error is captured into LASTERR and the statements between the CATCH
@@ -534,48 +538,43 @@ try
         timing_diagnosis(ExpInfo)
     end
     
-catch ME
-    display(ME)
-    display(ME.message)
-    %EMERGENCY SAVE DATA
-    ExpInfo.Cfg = Cfg;
-    if exist('TrialInfo', 'var') 
-        ExpInfo.TrialInfo = TrialInfo;
-        fprintf('TRYING TO SAVE THE DATA. IT MAY BE INCOMPLETE! ...');
-        cmd = sprintf('save %s ExpInfo', expName);
-        eval(cmd)
-        fprintf(1, 'DONE.\n');
-    end
-
-    if exist('windowPtr', 'var')
-        %     % catch error
-        Cfg = ASF_PTBExit(windowPtr, Cfg, 1);
-    else
-        sca
-    end
-    
-    %     PTBCatchError
-end % try ... catch %
-
+% catch ME
+%     display(ME)
+%     display(ME.message)
+%     %EMERGENCY SAVE DATA
+%     ExpInfo.Cfg = Cfg;
+%     if exist('TrialInfo', 'var') 
+%         ExpInfo.TrialInfo = TrialInfo;
+%         fprintf('TRYING TO SAVE THE DATA. IT MAY BE INCOMPLETE! ...');
+%         cmd = sprintf('save %s ExpInfo', expName);
+%         eval(cmd)
+%         fprintf(1, 'DONE.\n');
+%     end
+% 
+%     if exist('windowPtr', 'var')
+%         %     % catch error
+%         Cfg = ASF_PTBExit(windowPtr, Cfg, 1);
+%     else
+%         sca
+%     end
+%     
+%     %     PTBCatchError
+% end % try ... catch %
+% 
 
 
 return
 
 %% ***INITIALIZATION ROUTINES***
-%% ASFInit
-function [ExpInfo, Cfg, trial, windowPtr, Stimuli] = ASFInit(Cfg, expName)
-errorFlag = 0;
+%CHECK WHETHER INPUT FILES EXIST AND IF THEY REFER TO EXISTING STIMULI
 
-fprintf(1, '*************************\n');
-fprintf(1, '*** ASF VERSION %5.3f ***\n', Cfg.ASFVersion);
-fprintf(1, '*************************\n');
-
-%CHECK WHETHER INPUT FILES EXIST
-fprintf(1, 'CHECKING FOR %s ... ', Cfg.stimNames);
-if exist(Cfg.stimNames, 'file') == 2
+function stimNames = checkSTD(fName)
+stimNames = [];
+fprintf(1, 'CHECKING FOR %s ... ', fName);
+if exist(fName, 'file') == 2
     fprintf(1, 'OK.\n');
     %CHECK WHETHER STIMULUS FILES EXIST
-    fid = fopen(Cfg.stimNames);
+    fid = fopen(fName);
     while(~feof(fid))
         aLine = fgetl(fid);
         fprintf('Searching for %s ...', aLine);
@@ -586,6 +585,7 @@ if exist(Cfg.stimNames, 'file') == 2
             
         if exist(aLine, 'file')
             fprintf(1, 'OK.\n');
+            stimNames{end+1} = aLine;
         else
             fclose(fid);
             fprintf(1, ' FILE MISSING. ABORT.\n');
@@ -597,6 +597,19 @@ else
     fprintf(1, 'does not exist. Program aborted\n');
     error('MISSING STD FILE')
 end
+
+%% ASFInit
+function [ExpInfo, Cfg, trial, windowPtr, Stimuli] = ASFInit(Cfg, expName)
+errorFlag = 0;
+
+fprintf(1, '*************************\n');
+fprintf(1, '*** ASF VERSION %5.3f ***\n', Cfg.ASFVersion);
+fprintf(1, '*************************\n');
+
+
+%CHECK WHETHER INPUT FILES EXIST
+fprintf(1, 'CHECKING FOR %s ... ', Cfg.stimFileName);
+Cfg.stimNames = checkSTD(Cfg.stimFileName);
 
 fprintf(1, 'CHECKING FOR %s ... ', Cfg.trialFileName);
 if exist(Cfg.trialFileName, 'file') == 2
@@ -795,7 +808,8 @@ Screen('TextSize', windowPtr, Cfg.Screen.fontSize);
 %LOAD BMPs ONTO TEXTURES
 Screen('DrawText', windowPtr, '... Loading Bitmaps...', 50, 495);
 Screen('Flip', windowPtr, 0, 1);
-[ExpInfo.stimNames, Stimuli, errorFlag, Cfg] = read_stimuli(windowPtr, Cfg);
+[Stimuli, errorFlag, Cfg] = read_stimuli(windowPtr, Cfg);
+ExpInfo.stimNames = Cfg.stimNames;
 if errorFlag
     ASF_PTBExit(windowPtr, Cfg, errorFlag)
     error('PROGRAM ABORTED')
@@ -1154,23 +1168,23 @@ end
 
 %% read_stimuli
 % Loads bitmaps from a list specified in a textfile onto textures
-function [stimNames, Stimuli, errorFlag, Cfg] = read_stimuli(windowPtr, Cfg)
+function [Stimuli, errorFlag, Cfg] = read_stimuli(windowPtr, Cfg)
 %function [stimNames, tex] = read_stimuli(windowPtr, fname_stim)
 %Loads bitmaps from a list specified in a textfile onto textures
 %if successful returns nstimulus names and textures
 %Example Call:
 %[stimNames, tex] = read_stimuli(windowPtr, 'stimdef.txt')
 Cfg.frameCounter = 0;
-fname_stim = Cfg.stimNames;
+
 %READ STIMULUS-NAMES
-stimNames  = importdata(fname_stim);
-%REPLACE \ WITH / ON UNIX SYSTEMS
-if isunix
-    for i = 1:numel(stimNames)
-        stimNames{i}(strfind(stimNames{i}, '\'))='/';
-    end
-end
-nStimuli = size(stimNames, 1);
+% stimNames = importdata(Cfg.stimFileName);
+% %REPLACE \ WITH / ON UNIX SYSTEMS
+% if isunix
+%     for i = 1:numel(stimNames)
+%         stimNames{i}(strfind(stimNames{i}, '\'))='/';
+%     end
+% end
+nStimuli = numel(Cfg.stimNames);
 
 %USE MATLAB'S PROGRESS BAR FOR FEEDBACK
 %h = waitbar(0,'Loading images...');
@@ -1185,7 +1199,7 @@ Stimuli.size = [];
 for iStimulus = 1:nStimuli
     %WAITBAR ON CONSOLE
     %waitbar(iStimulus/nStimuli,h)
-    fprintf(1, 'STIMULUS: %s ...', stimNames{iStimulus});
+    fprintf(1, 'STIMULUS: %s ...', Cfg.stimNames{iStimulus});
     
     %WAITBAR ON ASF STARTUP SCREEN
     Screen('FillRect', windowPtr, [ 255, 0, 0], [1, 1, 100, 20])
@@ -1198,7 +1212,7 @@ for iStimulus = 1:nStimuli
     
     %CREATE TEXTURE(S) FOR A GIVEN STIMULUS
     [errorFlag, aStimulus, frameCounter] =...
-        ASF_readStimulus(stimNames{iStimulus}, windowPtr, Cfg);
+        ASF_readStimulus(Cfg.stimNames{iStimulus}, windowPtr, Cfg);
     Cfg.frameCounter = Cfg.frameCounter + frameCounter;
     %CONCATENATE VECTOR OF EXISTING AND NEWLY CREATED TEXTURE HANDLES
     Stimuli.tex = [Stimuli.tex, aStimulus.tex];
@@ -1213,7 +1227,7 @@ if ~isempty(Cfg.readTextStimuli)
     fprintf(1, 'READING: %s ...', Cfg.readTextStimuli);
     
     if exist(Cfg.readTextStimuli, 'file')
-        Stimuli.CellArray_TextStimuli = importdata(Cfg.readTextStimuli);
+        Stimuli.CellArray_TextStimuli = importdata(Cfg.readTextStimuli); %WILL GIVE PROBLEMS WITH OCTAVE
         fprintf(1, 'OK\n');
     else
         fprintf(1, 'NOT FOUND\n');
@@ -1227,7 +1241,7 @@ if ~isempty(Cfg.readSoundStimuli)
     fprintf(1, 'READING: %s ...', Cfg.readSoundStimuli);
     
     if exist(Cfg.readSoundStimuli, 'file')
-        soundstimnames = importdata(Cfg.readSoundStimuli);
+        soundstimnames = importdata(Cfg.readSoundStimuli); %WILL GIVE PROBLEMS WITH OCTAVE
         nStimuli = size(soundstimnames, 1);
         %USE MATLAB'S PROGRESS BAR FOR FEEDBACK
         h = waitbar(0,'Loading sounds...');

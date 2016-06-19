@@ -84,15 +84,16 @@ fprintf(1, 'DONE\n')
 
 
 %SHUT DOWN SERIAL PORT
-out = instrfind('Tag', 'SerialResponseBox');
-if  ~isempty(out)
-    fclose(out);
-    %MAYBE I NEED TO INVALIDATE THE HANDLE TO SERIAL PORT
-    %SUCH AS
-    %delete(cfg.Hardware.serial.oSerial)
-    Cfg.Hardware.Serial = [];
+if ~isempty(which('instrfind'))
+    out = instrfind('Tag', 'SerialResponseBox');
+    if  ~isempty(out)
+        fclose(out);
+        %MAYBE I NEED TO INVALIDATE THE HANDLE TO SERIAL PORT
+        %SUCH AS
+        %delete(cfg.Hardware.serial.oSerial)
+        Cfg.Hardware.Serial = [];
+    end
 end
-
 %ANY TAKS RUNNING ON THE NI CARD?
 if Cfg.TMS.burstMode.on
     ASF_PulseTrainStopPulseTask(Cfg.hBurstTmsTask);
