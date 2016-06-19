@@ -16,8 +16,14 @@ Cfg.environment = 'MAC';
 
 switch Cfg.environment
     case 'MAC'
-        Cfg.Screen.skipSyncTests = 1;
-        Cfg.Screen.rect = [1, 1, 640, 480];
+        Cfg.Screen.skipSyncTests = 0;
+        %Best results with Macbook Pro 15" Retina
+        %and NVIDIA graphics card:
+        %-have automatic graphic switching disabled or enabled
+        %-put resolution to lowest (looks like 1024x640 -> 2048x1280)
+        %-do not set Cfg.Screen.Resolution
+        %Cfg.Screen.rect = [1, 1, 640, 480];
+ 
     case 'SONYVAYO-VGN'
         Cfg.Screen.skipSyncTests = 1;
 %         Cfg.Screen.Resolution.width = 1024;
