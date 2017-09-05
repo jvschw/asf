@@ -44,7 +44,13 @@ function [ExpInfo] = ASF(stimFileName, trialFileName, expName, Cfg)
 % Cfg.issueTriggers                     = [ {0} | 1 ] %ALLOWS TRIGGERING, REQUIRES DATA ACQUISITION TOOLBOX
 % Cfg.validTriggerValues                = [ {[]} | vectorOfValues ] %ALLOWS RESTRICTING WHICH PAGES RELEASE A TRIGGER [] means all valid
 % Cfg.synchToScanner                    = [ {0} | 1 ] %WAIT FOR EXTERNAL SIGNAL (E.G. TRIGGER FROM MR-SCANNER)
-% Cfg.synchToScannerPort                = [ {'PARALLEL'} | 'SERIAL' | 'SIMULATE' ]; %PORT FOR EXTERNAL SYNCH SIGNAL
+% Cfg.synchToScannerPort                = [ {'PARALLEL'} | 'SERIAL' | 'SIMULATE' | 'IO64' | 'NISES' | 'KEYBOARD']; %PORT FOR EXTERNAL SYNCH SIGNAL
+%                                           PARALLEL uses legacy interface of the data acquisition toolbox, which only works in 32 bit Matlab
+%                                           SERIAL should work on Windows computers
+%                                           SIMULATE (to be documented)
+%                                           IO64 is a library for the parallel port in 64 bit Windows
+%                                           NISES National instruments via session-based interface of data acquisition toolbox (64 bit Matlab)
+%                                           KEYBOARD uses a key defined in Cfg.triggerKey
 % Cfg.scannerSynchTimeOutMs             = [ {inf} ] %TIMEOT IN MILLISECONDS WHEN WAITING FOR SCANNER TRIGGER ON ANY PORT
 % Cfg.digitalInputDevice                = [ {'NONE'} | 'PARALLEL' | 'NIDAQ2' ]
 % Cfg.digitalOutputDevice               = [ {'NONE'} | 'PARALLEL' | 'NIDAQ2' | 'ARDUINO' ]
@@ -108,7 +114,7 @@ function [ExpInfo] = ASF(stimFileName, trialFileName, expName, Cfg)
 %Cfg.responseDevice = 'LUMINASERIAL';
 %[ExpInfo] = ASF('Demo1.std', 'Demo1.trd', 'testsubject', Cfg) %FROM ASF's DEMO DIRECTORY
 %
-%% MR SCENARIO WITH RESPONSE DEVICE EMULATING A KEYBOARD
+%% MR SCENARIO FOR 64-BIT MATLAB WITH RESPONSE DEVICE EMULATING A KEYBOARD
 %% AND A DEDICATED PARALLELPORT DRIVER (64-BIT) FOR SCANNER SYNCH
 %% (e.g. Regensburg)
 %Cfg.synchToScanner = 1;
@@ -117,6 +123,22 @@ function [ExpInfo] = ASF(stimFileName, trialFileName, expName, Cfg)
 %Cfg.enabledKeys = 1:256; %ANY KEY
 %Cfg.synchToScannerPort = 'IO64'; %see http://apps.usd.edu/coglab/psyc770/IO64.html
 %[ExpInfo] = ASF('Demo1.std', 'Demo1.trd', 'testsubject', Cfg) %FROM ASF's DEMO DIRECTORY
+%
+%% MR SCENARIO FOR 64-BIT MATLAB WITH SCANNER SYNC RECEIVED BY NI CARD (e.g. PCI 6503)
+%% AND RESPONSE DEVICE EMULATING A KEYBOARD (e.g. Royal Holloway University, RHUL)
+% Cfg.synchToScanner = 1;  %WAIT FOR EXTERNAL SIGNAL (E.G. TRIGGER FROM MR-SCANNER)
+% Cfg.synchToScannerPort = 'NISES'; %PORT FOR EXTERNAL SYNCH SIGNAL (NI-card, session-based interface of data acquisition toolbox)
+%
+%% MR SCENARIO WITH RESPONSE DEVICE EMULATING A KEYBOARD
+%% AND A SPECIFIC KEY FOR SCANNER SYNCH
+%Cfg.synchToScanner = 1;
+%Cfg.synchToScannerPort = 'KEYBOARD';
+%Cfg.triggerKey = 27; %ESCAPE
+%Cfg.responseDevice = 'KEYBOARD'
+%Cfg.enabledKeys = [KbName('a'), KbName('s')]; %2 response keys '1' and '2'
+%Cfg.Screen.rect = [1, 1, 640, 480]; %USE PART OF THE SCREEN
+%[ExpInfo] = ASF('Demo1.std', 'Demo1.trd', 'testsubject', Cfg) %FROM ASF's <asfInstallDir>/documentation/ASFdemos DIRECTORY
+%
 %
 %% TODO SCENARIOS
 %% -USER SUPPLIED STM COLUMNS
@@ -162,9 +184,18 @@ function [ExpInfo] = ASF(stimFileName, trialFileName, expName, Cfg)
 %
 %% LATEST CHANGES
 %%V.054
-%20160321 ADDED     When using the keyboard all keys are enabled by default. The user can provide a list of enabled keys. 
+%20160321 ADDED     When using the keyboard all keys are enabled by default. 
+%                   The user can provide a list of enabled keys. 
 %20160321 ADDED     empty expName means that no results will be logged
-%20160322 ADDED     Configurable way to start and end experiments Cfg.specialKeys.startExperiment and Cfg.specialKeys.endExperimen
+%20160322 ADDED     Configurable way to start and end experiments 
+%                   Cfg.specialKeys.startExperiment and
+%                   Cfg.specialKeys.endExperiment
+%%V.056
+%20170904 ADDED     Support for 64-bit Matlab digital IO (IO64 for parallel
+%                   port, see http://apps.usd.edu/coglab/psyc770/IO64.html, 
+%                   and Matlab Data Acquisition Toolbox's session based
+%                   interface using e.g. NI PCI 6503 card).
+%                   Digital output e.g. for EEG/MEG not yet tested.  
 %
 %TO DOs
 %rename Cfg.hardware to Cfg.Hardware (because Hardware is a structure itself)
@@ -177,7 +208,7 @@ function [ExpInfo] = ASF(stimFileName, trialFileName, expName, Cfg)
 %% ***ASF-MAIN LOOP***
 
 %DEFAULT CONFIGURATION
-Cfg.ASFVersion = 0.55;
+Cfg.ASFVersion = 0.56;
 Cfg.isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
 if Cfg.isOctave
     page_output_immediately(0);
@@ -288,6 +319,7 @@ if ~isfield(Cfg.specialKeys, 'pauseExperiment')
 end
 if ~isfield(Cfg.specialKeys, 'startExperiment'), Cfg.specialKeys.startExperiment = 'MOUSE'; else end
 if ~isfield(Cfg.specialKeys, 'endExperiment'), Cfg.specialKeys.endExperiment = 'MOUSE'; else end
+KbName('UnifyKeyNames'); %WHY IS THIS HERE?
 if ~isfield(Cfg, 'plotVOT'), Cfg.plotVOT = 0; else end;
 
 if ~isfield(Cfg, 'digitalInputDevice'), Cfg.digitalInputDevice = 'NONE'; else end; %[ {'NONE'}|'PARALLEL'|'NIDAQ2' ]
@@ -734,6 +766,9 @@ fprintf(1, 'DONE\n');
 %FOR INPUT
 if Cfg.synchToScanner
     switch Cfg.synchToScannerPort
+        case 'NISES'
+            Cfg = InitNiInputSessionBased(Cfg);
+
         case 'IO64'
             Cfg.Hardware.scannerIO64 = io64();
             [triggerNo, triggerList] = checkTriggerSignal64(1, 2, Cfg.Hardware.scannerIO64);
@@ -759,7 +794,7 @@ if Cfg.synchToScanner
     fprintf(1, 'LOADING ASF_waitForScannerSynch into memory ...');
     CfgTmp = Cfg;
     CfgTmp.ScannerSynchShowDefaultMessage = 0;
-    CfgTmp.scannerSynchTimeOutMs = 100;
+    CfgTmp.scannerSynchTimeOutMs = -1;%100;
     ASF_waitForScannerSynch(windowPtr, CfgTmp)
     fprintf(1, ' DONE.\n');
 end
@@ -2302,6 +2337,18 @@ Cfg.Hardware.Serial.hSerial =...
 fopen(Cfg.Hardware.Serial.hSerial);
 Cfg.Hardware.Serial.hSerial
 Cfg.Hardware.Serial.useSerialOut = 1;
+
+
+%% InitNiInputSessionBased
+function Cfg = InitNiInputSessionBased(Cfg)
+if ~isfield(Cfg, 'Hardware'), Cfg.Hardware = []; else end
+if ~isfield(Cfg.Hardware, 'nises'), Cfg.Hardware.nises = []; else end
+%if ~isfield(Cfg.Hardware.parallel, 'ON'), Cfg.Hardware.parallel.ON = 0; Cfg.Hardware.parallel.OFF = 1;else end
+
+fprintf(1, 'INITIALIZING NATIONAL INSTRUMENTS CARD FOR INPUT\n');
+% OPEN PARPORT
+Cfg.Hardware.nises.s = daq.createSession('ni'); %s is the session handle
+Cfg.Hardware.nises.ch = addDigitalChannel(Cfg.Hardware.nises.s, 'dev1', 'Port0/Line0', 'InputOnly'); %ch is the channel handle
 
 
 

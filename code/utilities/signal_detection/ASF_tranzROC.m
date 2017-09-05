@@ -35,7 +35,8 @@ if cfg.plot
     ylabel('Transformed Hit-Rate z(H)')
     axis equal
     set(gca, 'xlim', [-3, 3], 'ylim', [-3, 3])
-    lh1 = legend(legstr, 'Location', 'SouthEast', 'box', 'off', 'xcolor', get(gca, 'color'), 'ycolor', get(gca, 'color'));
+    %lh1 = legend(legstr, 'Location', 'SouthEast', 'box', 'off', 'xcolor', get(gca, 'color'), 'ycolor', get(gca, 'color'));
+   lh1 = legend(legstr, 'Location', 'SouthEast', 'box', 'off');
     %p = get(lh, 1, Position);
     
     fh(2) = figure;
@@ -46,7 +47,8 @@ if cfg.plot
     set(gca, 'xlim', [0, 1], 'ylim', [0, 1])
     xlabel('False-alarm Rate (F)')
     ylabel('Hit-Rate (H)')
-    lh2 = legend(legstr, 'Location', 'SouthEast', 'box', 'off', 'xcolor', get(gca, 'color'), 'ycolor', get(gca, 'color'));
+    %lh2 = legend(legstr, 'Location', 'SouthEast', 'box', 'off', 'xcolor', get(gca, 'color'), 'ycolor', get(gca, 'color'));
+    lh2 = legend(legstr, 'Location', 'SouthEast', 'box', 'off');
     
     
 end
