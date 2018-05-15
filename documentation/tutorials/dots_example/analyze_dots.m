@@ -1,4 +1,4 @@
-
+function analyzeDots(ExpInfo)
 res = ASF_readExpInfo(ExpInfo);
 
 %pull out stimulus position directly from logged trial-info
