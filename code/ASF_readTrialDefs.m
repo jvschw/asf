@@ -82,6 +82,7 @@ if exist(fname, 'file') == 2
         counter = counter + 1;
         aline = fgetl(fid);
         if ~ischar(aline), break, end
+        if isempty(aline), break, end %now deals with trailing empty lines in a trd
         %fprintf(1, '%s\n', aline)
         aline = str2num(aline); %#ok<ST2NM>
         trialdefs(counter).code = aline(1); %#ok<AGROW>
