@@ -312,7 +312,7 @@ if ~isfield(Cfg.specialKeys, 'quitExperiment')
 end
 if ~isfield(Cfg.specialKeys, 'pauseExperiment')
     if ispc
-        Cfg.specialKeys.quitExperiment = 80; %p on a windows keyboard
+        Cfg.specialKeys.pauseExperiment = 80; %p on a windows keyboard
     else
         Cfg.specialKeys.pauseExperiment = 19;%p on a Mac keyboard
     end
