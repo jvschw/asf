@@ -15,4 +15,4 @@ Cfg.randomizeTrials = 1;
 ExpInfo = ASF('stimuli.std', 'trialdefs.trd', 'test', Cfg);
 
 %for data analysis, try
-analyze_dots(ExpInfo)
+%analyze_dots(ExpInfo)
