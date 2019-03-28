@@ -215,30 +215,30 @@ if Cfg.isOctave
 end
 %BETA FEATURES
 %INSTRUCTION TRIALS
-if ~isfield(Cfg, 'Instruction'), Cfg.Instruction = []; else end
-if ~isfield(Cfg.Instruction, 'instructionTrial'), Cfg.Instruction.instructionTrial = []; else end
-if ~isfield(Cfg.Instruction, 'showInstruction'), Cfg.Instruction.showInstruction = 0; else end
-if ~isfield(Cfg.Instruction, 'instructionSlide'), Cfg.Instruction.instructionSlide = NaN; else end
+if ~isfield(Cfg, 'Instruction'), Cfg.Instruction = []; else end 
+if ~isfield(Cfg.Instruction, 'instructionTrial'), Cfg.Instruction.instructionTrial = []; else end 
+if ~isfield(Cfg.Instruction, 'showInstruction'), Cfg.Instruction.showInstruction = 0; else end 
+if ~isfield(Cfg.Instruction, 'instructionSlide'), Cfg.Instruction.instructionSlide = NaN; else end 
 
 %BETA FEATURE: FIXATION CROSS PROPERTIES
 if ~isfield(Cfg, 'Fixation'), Cfg.Fixation = []; else end;
-if ~isfield(Cfg.Fixation, 'fixType'), Cfg.Fixation.fixType = 1; else end; %1 square, 2 dot (1 is safer for certain graphics cards)
-if ~isfield(Cfg.Fixation, 'offsetX'), Cfg.Fixation.offsetX = 0; else end;
-if ~isfield(Cfg.Fixation, 'offsetY'), Cfg.Fixation.offsetY = 0; else end;
+if ~isfield(Cfg.Fixation, 'fixType'), Cfg.Fixation.fixType = 1; else end;  %1 square, 2 dot (1 is safer for certain graphics cards)
+if ~isfield(Cfg.Fixation, 'offsetX'), Cfg.Fixation.offsetX = 0; else end; 
+if ~isfield(Cfg.Fixation, 'offsetY'), Cfg.Fixation.offsetY = 0; else end; 
 
 %SCREEN SETTINGS
-if ~isfield(Cfg, 'Screen'), Cfg.Screen = []; else end;
-if ~isfield(Cfg.Screen, 'skipSyncTests'), Cfg.Screen.skipSyncTests = 0; else end;
-if ~isfield(Cfg.Screen, 'rect'), Cfg.Screen.rect = []; else end; %Cfg.Screen.rect = [1, 1, 320, 240]
-if ~isfield(Cfg.Screen, 'color'), Cfg.Screen.color = [255, 255, 255]; else end;% [{[255, 255, 255]}|[R, G, B]]
+if ~isfield(Cfg, 'Screen'), Cfg.Screen = []; else end; %#ok<*SEPEX>
+if ~isfield(Cfg.Screen, 'skipSyncTests'), Cfg.Screen.skipSyncTests = 0; else end; 
+if ~isfield(Cfg.Screen, 'rect'), Cfg.Screen.rect = []; else end;  %Cfg.Screen.rect = [1, 1, 320, 240]
+if ~isfield(Cfg.Screen, 'color'), Cfg.Screen.color = [255, 255, 255]; else end; % [{[255, 255, 255]}|[R, G, B]]
 if ~isfield(Cfg.Screen, 'fontSize'), Cfg.Screen.fontSize = 24; end;
 if ~isfield(Cfg.Screen, 'fontName'), Cfg.Screen.fontName = 'Arial'; end; %'Courier New'
 %BETA FEATURE: OFFSETS
 %PICTURES CAN BE SHIFTED WITHIN A SCREEN
 %NEED TO INCORPORATE THIS
 %Cfg.destinationRect = CenterRectOnPoint([1, 1, 256, 256], Cfg.Screen.Resolution.width/2 + Cfg.fixOffsetX, Cfg.Screen.Resolution.height/2 + Cfg.fixOffsetY);
-if ~isfield(Cfg.Screen, 'withinOffsetX'), Cfg.Screen.withinOffsetX = 0; else end;
-if ~isfield(Cfg.Screen, 'withinOffsetY'), Cfg.Screen.withinOffsetY = 0; else end;
+if ~isfield(Cfg.Screen, 'withinOffsetX'), Cfg.Screen.withinOffsetX = 0; else end; 
+if ~isfield(Cfg.Screen, 'withinOffsetY'), Cfg.Screen.withinOffsetY = 0; else end; 
 
 %SHOULD BE CALLED Cfg.Screen.useBackBuffer
 if ~isfield(Cfg, 'useBackBuffer')
@@ -614,14 +614,16 @@ if exist(fName, 'file') == 2
         if ~ispc
             aLine(strfind(aLine, '\')) = '/';
         end
-            
-        if exist(aLine, 'file')
-            fprintf(1, 'OK.\n');
-            stimNames{end+1} = aLine;
-        else
-            fclose(fid);
-            fprintf(1, ' FILE MISSING. ABORT.\n');
-            error('Missing File in STD.')
+        
+        if ~isempty(aLine) %deal with empty trailing lines in std-file
+            if exist(aLine, 'file')
+                fprintf(1, 'OK.\n');
+                stimNames{end+1} = aLine; %#ok<AGROW>
+            else
+                fclose(fid);
+                fprintf(1, ' FILE MISSING. ABORT.\n');
+                error('Missing File in STD.')
+            end
         end
     end
     fclose(fid);
@@ -632,7 +634,7 @@ end
 
 %% ASFInit
 function [ExpInfo, Cfg, trial, windowPtr, Stimuli] = ASFInit(Cfg, expName)
-errorFlag = 0;
+% errorFlag = 0;
 
 fprintf(1, '*************************\n');
 fprintf(1, '*** ASF VERSION %5.3f ***\n', Cfg.ASFVersion);
@@ -660,9 +662,9 @@ fprintf(1, 'OK\n');
 
 
 %INIT SOUND
-if ~isfield(Cfg.Sound, 'fSample'), Cfg.Sound.fSample = 44100; else end;
-if ~isfield(Cfg.Sound, 'nBits'), Cfg.Sound.nBits = 16; else end
-if ~isfield(Cfg.Sound, 'nChannels'), Cfg.Sound.nChannels = 2; else end
+if ~isfield(Cfg.Sound, 'fSample'), Cfg.Sound.fSample = 44100; else end; 
+if ~isfield(Cfg.Sound, 'nBits'), Cfg.Sound.nBits = 16; else end 
+if ~isfield(Cfg.Sound, 'nChannels'), Cfg.Sound.nChannels = 2; else end 
 
 switch Cfg.Sound.soundMethod
     case {'audioplayer', 'wavplay'}
@@ -679,17 +681,17 @@ switch Cfg.Sound.soundMethod
         %NEEDS MORE COMMENTING
         %------------------------------------------------------------------
         %SUPPORT FOR PSYCHPORTAUDIO (THANKS TO SETH LEVINE)
-        if ~isfield(Cfg.Sound, 'nPlaybackDevices'), Cfg.Sound.nPlaybackDevices = 1; else end
-        if ~isfield(Cfg.Sound, 'nCaptureDevices'), Cfg.Sound.nCaptureDevices = 0; else end
+        if ~isfield(Cfg.Sound, 'nPlaybackDevices'), Cfg.Sound.nPlaybackDevices = 1; else end 
+        if ~isfield(Cfg.Sound, 'nCaptureDevices'), Cfg.Sound.nCaptureDevices = 0; else end 
         if Cfg.Sound.nPlaybackDevices > 0
             Dev = PsychPortAudio('GetDevices');
             switch computer
                 case 'MACI64'
                     idxPlaybackDevs = find(strcmp({Dev.DeviceName}, 'Built-in Output'));
-                    playbackDevs = [Dev(idxPlaybackDevs).DeviceIndex];
+                    playbackDevs = [Dev(idxPlaybackDevs).DeviceIndex]; %#ok<FNDSB>
                 otherwise
                     idxPlaybackDevs = find([Dev.NrOutputChannels]);
-                    playbackDevs = [Dev(idxPlaybackDevs).DeviceIndex];
+                    playbackDevs = [Dev(idxPlaybackDevs).DeviceIndex]; %#ok<FNDSB>
 
             end
                     
@@ -1251,7 +1253,7 @@ for iStimulus = 1:nStimuli
     Cfg.frameCounter = Cfg.frameCounter + frameCounter;
     %CONCATENATE VECTOR OF EXISTING AND NEWLY CREATED TEXTURE HANDLES
     Stimuli.tex = [Stimuli.tex, aStimulus.tex];
-    %Stimuli.size = vertStimuli.size
+    Stimuli.size = vertcat(Stimuli.size, aStimulus.size);
 end
 %CLOSE WAITBAR
 %close(h)

@@ -2,7 +2,7 @@ function ExpInfo = run_dots
 Cfg = [];
 Cfg.userSuppliedTrialFunction = @ASF_showTrial_dotsXY;
 Cfg.userDefinedSTMcolumns = 2; 
-Cfg.randomizeTrials = 1;
+Cfg.randomizeTrials = 0;
 
 % %Macbook Pro Retina needs this when running without external monitor
 % Cfg.Screen.skipSyncTests = 0;
@@ -12,7 +12,7 @@ Cfg.randomizeTrials = 1;
 % Cfg.Screen.Resolution.hz = 0;
 
 
-ExpInfo = ASF('stimuli.std', 'trialdefs.trd', 'test', Cfg);
+ExpInfo = ASF('stimuli.std', 'trialdefs_full.trd', 'test_full', Cfg);
 
 %for data analysis, try
 %analyze_dots(ExpInfo)

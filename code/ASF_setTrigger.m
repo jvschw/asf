@@ -7,7 +7,7 @@ if Cfg.issueTriggers
                 case 'ARDUINO'
                     ASF_arduinoTrigger(Cfg.Hardware.Arduino.hSerial, triggerVal, Cfg.Trigger.triggerType)
                     %DEBUGGING
-                    %fprintf(1, 'MARKER %d\n', triggerVal);
+                    fprintf(1, 'MARKER %d\n', triggerVal);
                 case 'PARALLEL'
                     %TRIGGER ON PARALLEL PORT
                     putvalue(Cfg.Hardware.DigitalOutput.mydio.TriggerPort, triggerVal);

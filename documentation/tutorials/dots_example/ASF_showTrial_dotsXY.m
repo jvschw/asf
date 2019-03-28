@@ -165,7 +165,7 @@ for iPage = atrial.startRTonPage:atrial.endRTonPage
         %PUT THE APPROPRIATE TEXTURE ON THE BACK BUFFER
         Screen('DrawTexture', windowPtr, Stimuli.tex(atrial.pageNumber(iPage)));
         drawFix(windowPtr, Cfg, fixColor)
-        if iPage == atrial.startRTonPage
+        if iPage == 2
             Screen('DrawDots', windowPtr, [ Cfg.Screen.centerX + stimPosX,...
                 Cfg.Screen.centerY + stimPosY], 10, [200 200 200], [], 2);
         end
